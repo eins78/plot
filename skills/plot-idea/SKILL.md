@@ -5,6 +5,10 @@ description: >-
   Part of the Plot workflow. Use on /plot-idea.
 globs: []
 license: MIT
+metadata:
+  author: eins78
+  repo: https://github.com/eins78/skills
+compatibility: Designed for Claude Code. Requires git and gh CLI.
 ---
 
 # Plot: Create Idea
