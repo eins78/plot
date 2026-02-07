@@ -8,7 +8,8 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/skills
-compatibility: Designed for Claude Code. Requires git and gh CLI.
+version: 1.0.0-beta
+compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
 ---
 
 # Plot: Deliver Plan

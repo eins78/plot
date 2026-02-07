@@ -9,7 +9,8 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/skills
-compatibility: Designed for Claude Code
+version: 1.0.0-beta
+compatibility: Designed for Claude Code and Cursor
 ---
 
 # Plot
