@@ -142,7 +142,19 @@ gh pr edit <number> --add-project "<project board name>"
 
 Collect all created PR numbers and URLs.
 
-### 6. Update Plan File on Main
+### 6. Check for Release Note Requirements
+
+After creating implementation PRs, check project rules for release note conventions:
+
+1. Read `CLAUDE.md` for any release note or changeset instructions
+2. Check if `.changeset/config.json` exists (project uses changesets)
+3. Check for other release note tooling (scripts, config)
+
+If release note tooling is found, include a reminder in the summary (step 8) about adding release note entries on each implementation branch (e.g., "Remember to run `pnpm exec changeset` to add a changelog entry").
+
+If no tooling is found, skip — the plan's `## Changelog` section will be used during `/plot-release`.
+
+### 7. Update Plan File on Main
 
 After all branches are created, update `docs/plans/<slug>.md` on main to link the implementation PRs.
 
@@ -160,7 +172,7 @@ git commit -m "plot: link implementation PRs for <slug>"
 git push
 ```
 
-### 7. Summary
+### 8. Summary
 
 Print:
 - Plan merged: PR #<plan-number> (or "already merged" if it was pre-merged)

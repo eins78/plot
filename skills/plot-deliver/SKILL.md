@@ -100,7 +100,20 @@ Compare what the plan promised against what was actually delivered.
    - If any are partial/missing: list them and ask "Deliver anyway, or hold off?"
    - If the user declines, stop — do not archive.
 
-### 6. Archive Plan
+### 6. Check for Release Note Entries
+
+For feature and bug plans, check whether release note entries exist:
+
+1. Check if the project uses release note tooling (`.changeset/config.json`, `CLAUDE.md` instructions, scripts)
+2. If tooling is found (e.g., changesets), check whether any release note entries were added in the merged PRs:
+   - For changesets: check if any `.changeset/*.md` files (excluding `README.md`) exist on main that reference work from this plan's PRs
+   - For other tooling: follow project-specific instructions
+3. If no entries are found for a feature/bug plan, **warn** the user: "No release note entries found for this feature. Consider adding one before releasing."
+4. This is a warning, not a blocker — proceed with archiving regardless
+
+Skip this step entirely for docs/infra plans (they don't need release notes).
+
+### 7. Archive Plan
 
 ```bash
 git checkout main
@@ -112,7 +125,7 @@ git commit -m "plot: deliver <slug>"
 git push
 ```
 
-### 7. Summary
+### 8. Summary
 
 Print:
 - Delivered: `<slug>`
