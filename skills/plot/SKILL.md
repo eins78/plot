@@ -6,6 +6,11 @@ description: >-
   Spoke commands: /plot-idea, /plot-approve, /plot-deliver, /plot-release.
 globs: []
 license: MIT
+metadata:
+  author: eins78
+  repo: https://github.com/eins78/skills
+  version: 1.0.0-beta.1
+compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
 ---
 
 # Plot
