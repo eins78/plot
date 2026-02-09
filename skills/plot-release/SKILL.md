@@ -51,24 +51,19 @@ If `$ARGUMENTS` is empty:
   - Breaking changes noted in changelogs → suggest `major`
 - Propose the version and confirm with the user
 
-### 2. Discover Release Note Tooling
+### 2. Generate Release Notes
 
-Check for project-specific release note conventions before constructing notes manually:
+Check for project-specific release note tooling, then either run it or fall back to manual collection.
 
-1. **Changesets:** Check if `.changeset/config.json` exists. If so, the project uses `@changesets/cli`.
-2. **Project rules:** Read `CLAUDE.md` (or `AGENTS.md`) for release note instructions (e.g., custom scripts, specific commands).
-3. **Custom scripts:** Check for release-related scripts in `package.json` (e.g., `release`, `version`, `changelog`).
+**Discover tooling** — check in this order:
 
-**If tooling is found (e.g., changesets):**
-- Run the project's tooling to generate/update the changelog and bump the version. For changesets: `pnpm exec changeset version` (this consumes `.changeset/*.md` files, updates `CHANGELOG.md`, and bumps `package.json`).
-- Proceed to step 3 (cross-check).
+1. **Changesets:** Does `.changeset/config.json` exist? If so, the project uses `@changesets/cli`.
+2. **Project rules:** Read `CLAUDE.md` and `AGENTS.md` for release note instructions (e.g., custom scripts, specific commands).
+3. **Custom scripts:** Check `package.json` for release-related scripts (e.g., `release`, `version`, `changelog`).
 
-**If no tooling is found:**
-- Fall through to manual collection (step 2b).
+**If tooling is found:** run it to generate/update the changelog and bump the version. For changesets: `pnpm exec changeset version` (consumes `.changeset/*.md` files, updates `CHANGELOG.md`, bumps `package.json`). Then skip ahead to step 3 (cross-check).
 
-### 2b. Collect Changelog Entries (manual fallback)
-
-Find delivered plans since the last release:
+**If no tooling is found:** collect changelog entries manually from delivered plans:
 
 ```bash
 # Get the date of the last release tag

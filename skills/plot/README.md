@@ -11,10 +11,10 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 | Path | Purpose | Size |
 |------|---------|------|
 | `plot/SKILL.md` | Hub: overview, lifecycle diagrams, setup, phases, conventions, guardrails, dispatcher | ~190 lines |
-| `plot-idea/SKILL.md` | Create plan: idea branch + plan file + draft PR (8 steps) | ~130 lines |
-| `plot-approve/SKILL.md` | Approve plan: merge PR, fan out impl branches/PRs (7 steps) | ~150 lines |
-| `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, archive (7 steps) | ~110 lines |
-| `plot-release/SKILL.md` | Release: version bump, changelog assembly, git tag (7 steps) | ~130 lines |
+| `plot-idea/SKILL.md` | Create plan: idea branch + plan file + draft PR (8 steps) | ~155 lines |
+| `plot-approve/SKILL.md` | Approve plan: merge PR, fan out impl branches/PRs (8 steps) | ~185 lines |
+| `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, archive (8 steps) | ~140 lines |
+| `plot-release/SKILL.md` | Release: version bump, changelog assembly, git tag (6 steps) | ~155 lines |
 | `plot/scripts/plot-pr-state.sh` | Helper: query plan PR state (draft/ready/merged/closed) | 41 lines |
 | `plot/scripts/plot-impl-status.sh` | Helper: query all impl PR states for a slug from plan on main | 63 lines |
 | `plot/changelog.md` | Complete evolution history across 5 development sessions | ~200 lines |

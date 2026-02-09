@@ -144,13 +144,13 @@ Collect all created PR numbers and URLs.
 
 ### 6. Check for Release Note Requirements
 
-After creating implementation PRs, check project rules for release note conventions:
+After creating implementation PRs, check for project-specific release note tooling:
 
-1. Read `CLAUDE.md` for any release note or changeset instructions
-2. Check if `.changeset/config.json` exists (project uses changesets)
-3. Check for other release note tooling (scripts, config)
+1. **Changesets:** Does `.changeset/config.json` exist? If so, the project uses `@changesets/cli`.
+2. **Project rules:** Read `CLAUDE.md` and `AGENTS.md` for release note instructions (e.g., custom scripts, specific commands).
+3. **Custom scripts:** Check `package.json` for release-related scripts (e.g., `release`, `version`, `changelog`).
 
-If release note tooling is found, include a reminder in the summary (step 8) about adding release note entries on each implementation branch (e.g., "Remember to run `pnpm exec changeset` to add a changelog entry").
+If tooling is found, note the specific tool for the summary (step 8).
 
 If no tooling is found, skip — the plan's `## Changelog` section will be used during `/plot-release`.
 
@@ -179,4 +179,5 @@ Print:
 - Implementation PRs created:
   - `type/name` → PR #<number> (URL)
   - `type/name` → PR #<number> (URL)
+- If release note tooling was found in step 6: "Remember to add release note entries on each implementation branch (e.g., `pnpm exec changeset`)."
 - Next step: check out a branch and start implementing

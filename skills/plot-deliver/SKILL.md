@@ -104,7 +104,10 @@ Compare what the plan promised against what was actually delivered.
 
 For feature and bug plans, check whether release note entries exist:
 
-1. Check if the project uses release note tooling (`.changeset/config.json`, `CLAUDE.md` instructions, scripts)
+1. **Discover tooling** — check in this order:
+   1. **Changesets:** Does `.changeset/config.json` exist? If so, the project uses `@changesets/cli`.
+   2. **Project rules:** Read `CLAUDE.md` and `AGENTS.md` for release note instructions (e.g., custom scripts, specific commands).
+   3. **Custom scripts:** Check `package.json` for release-related scripts (e.g., `release`, `version`, `changelog`).
 2. If tooling is found (e.g., changesets), check whether any release note entries were added in the merged PRs:
    - For changesets: check if any `.changeset/*.md` files (excluding `README.md`) exist on main that reference work from this plan's PRs
    - For other tooling: follow project-specific instructions
