@@ -81,19 +81,31 @@ Read `docs/plans/<slug>.md` and parse the `## Branches` section. Expected format
 
 Each line must have a backtick-quoted branch name (e.g. `feature/sse-backpressure`) and a description after the `—` dash.
 
-- If no branches are listed (or section is empty/only has the template comment), error: "No branches listed in the plan. Add branches to the `## Branches` section before approving."
-- Validate each branch name starts with a known prefix: `feature/`, `bug/`, `docs/`, `infra/`
+Example — a valid Branches section:
+```markdown
+## Branches
+
+- `feature/sse-backpressure` — Handle client disconnects gracefully
+- `bug/sse-memory-leak` — Fix connection pool leak on timeout
+```
+
+Parsing rules:
+1. Find the `## Branches` section
+2. For each line starting with `- \``: extract the branch name between backticks, extract the description after ` — `
+3. Skip comment lines (`<!-- ... -->`) and blank lines
+4. If no branches are listed (or section is empty/only has the template comment), error: "No branches listed in the plan. Add branches to the `## Branches` section before approving."
+5. Validate each branch name starts with a known prefix: `feature/`, `bug/`, `docs/`, `infra/`
 
 ### 5. Create Implementation Branches and PRs
 
-Collect approval metadata:
+Collect approval metadata once (reuse for all branches):
 
 ```bash
 APPROVED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 APPROVED_BY=$(gh api user --jq '.login')
 ```
 
-For **each branch** in the parsed list:
+For **each branch** in the parsed list (use the `APPROVED_AT` and `APPROVED_BY` values collected above):
 
 ```bash
 git checkout -b <type>/<name> origin/main
@@ -158,8 +170,15 @@ If no tooling is found, skip — the plan's `## Changelog` section will be used 
 
 After all branches are created, update `docs/plans/<slug>.md` on main to link the implementation PRs.
 
-In the `## Branches` section, append ` → #<number>` to each branch line:
+In the `## Branches` section, append ` → #<number>` to each branch line.
 
+Before:
+```markdown
+- `feature/sse-backpressure` — Handle disconnects
+- `bug/sse-memory-leak` — Fix connection leak
+```
+
+After:
 ```markdown
 - `feature/sse-backpressure` — Handle disconnects → #12
 - `bug/sse-memory-leak` — Fix connection leak → #13

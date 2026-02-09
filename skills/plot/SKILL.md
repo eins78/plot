@@ -182,7 +182,7 @@ Flag any problems found:
 
 - **Orphan impl branches**: branches with `feature/`, `bug/`, `docs/`, `infra/` prefix that have no corresponding plan in `docs/plans/`
 - **Phase mismatches**: plan says Draft but PR is non-draft, or plan says Approved but PR is still open
-- **Stale drafts**: impl PRs that have been in draft state for a long time
+- **Stale drafts**: impl PRs that have been in draft state for more than 7 days
 
 ### 4. Status Summary
 

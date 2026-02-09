@@ -80,6 +80,8 @@ gh pr view <number> --json state,isDraft --jq '{state: .state, isDraft: .isDraft
 
 ### 5. Verify Plan Completeness
 
+> **Graceful degradation:** For facilitators without deep reasoning capability (e.g., Haiku), skip the detailed diff review below. Instead: verify all PRs are merged (step 4), then ask the user: "All implementation PRs are merged. Ready to archive this plan?" The detailed comparison is valuable but not required — human judgment is the final gate regardless.
+
 Compare what the plan promised against what was actually delivered.
 
 1. **Extract deliverables** from the plan file. Look for actionable items in sections like `## Design`, `## Branches`, or bulleted lists that describe what should be built. Number each deliverable for reference.
@@ -104,15 +106,23 @@ Compare what the plan promised against what was actually delivered.
 
 For feature and bug plans, check whether release note entries exist:
 
-1. **Discover tooling** — check in this order:
-   1. **Changesets:** Does `.changeset/config.json` exist? If so, the project uses `@changesets/cli`.
-   2. **Project rules:** Read `CLAUDE.md` and `AGENTS.md` for release note instructions (e.g., custom scripts, specific commands).
-   3. **Custom scripts:** Check `package.json` for release-related scripts (e.g., `release`, `version`, `changelog`).
-2. If tooling is found (e.g., changesets), check whether any release note entries were added in the merged PRs:
-   - For changesets: check if any `.changeset/*.md` files (excluding `README.md`) exist on main that reference work from this plan's PRs
-   - For other tooling: follow project-specific instructions
-3. If no entries are found for a feature/bug plan, **warn** the user: "No release note entries found for this feature. Consider adding one before releasing."
-4. This is a warning, not a blocker — proceed with archiving regardless
+**Discover tooling** — check in this order, stop at the first match:
+
+```
+if .changeset/config.json exists:
+  → project uses @changesets/cli
+  → check if .changeset/*.md files (excluding README.md) exist on main
+elif CLAUDE.md or AGENTS.md contain release note instructions:
+  → follow those project-specific instructions
+elif package.json has release/version/changelog scripts:
+  → note the tool for the summary
+else:
+  → no tooling found, skip this step
+```
+
+If tooling was found but no release note entries exist for this plan's work, **warn** the user: "No release note entries found for this feature. Consider adding one before releasing."
+
+This is a warning, not a blocker — proceed with archiving regardless.
 
 Skip this step entirely for docs/infra plans (they don't need release notes).
 

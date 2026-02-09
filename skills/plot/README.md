@@ -41,6 +41,8 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 
 8. **Phase guardrails** — Each command checks the current phase before acting. Cannot approve an unreviewed draft. Cannot deliver with open PRs. Cannot release undelivered work.
 
+9. **Small models welcome** — Facilitator tasks (reading state, running commands, printing summaries) must work with Sonnet/Haiku. Explicit steps, structured data, concrete examples. Judgment steps degrade gracefully rather than breaking.
+
 ## Roles
 
 Plot recognizes three roles in the development workflow:

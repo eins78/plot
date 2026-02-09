@@ -48,6 +48,10 @@ Each command checks the current workflow phase before acting. You cannot approve
 
 Delivered plans move from `docs/plans/` to `docs/archive/YYYY-MM-DD-slug.md`. The date prefix sorts files chronologically and answers "when did this ship?" at a glance, without parsing git history.
 
+### 9. Small models welcome
+
+Facilitator tasks — reading git state, running commands, printing summaries — must work with smaller, faster models (Sonnet, Haiku), not just frontier models. This means: explicit step-by-step instructions over narrative prose, structured data (JSON from helper scripts) over free-form parsing, and concrete examples over abstract descriptions. Steps requiring judgment (completeness verification, release note cross-checking) should degrade gracefully: a smaller model asks for human confirmation where a larger model might decide autonomously, but the workflow never breaks.
+
 ## Lifecycle
 
 Plot has four plan-level phases: **Draft**, **Approved**, **Delivered**, and **Released**.
@@ -106,5 +110,6 @@ When considering a change to Plot, ask:
 4. Is it a convention that projects opt into, or configuration that Plot enforces?
 5. Would removing it make the system simpler without losing something essential?
 6. Could a human with basic git knowledge execute this manually?
+7. Could a smaller model (Sonnet/Haiku) follow these instructions for the mechanical parts?
 
 If the answer to question 5 is yes, remove it. If the answer to question 6 is no, simplify it. Plot should stay lean. The goal is a small set of strong conventions, not a large set of flexible options.

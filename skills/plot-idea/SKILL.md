@@ -38,10 +38,10 @@ If `$ARGUMENTS` is empty or missing:
 - Otherwise ask: "What's the idea? Usage: `/plot-idea <slug>: <title>`"
 
 Extract `slug` and `title` from `$ARGUMENTS`:
-- Everything before the first `:` is the slug (trimmed, lowercase, hyphens only)
+- Everything before the first `:` is the slug (trimmed)
 - Everything after is the title (trimmed)
 - If no `:` found, treat the entire input as the slug and ask for a title
-- If slug contains invalid characters (spaces, uppercase, etc.), normalize it and confirm with the user
+- Slug must match `[a-z0-9-]+` (lowercase letters, digits, hyphens only). If it doesn't, ask the user to fix it rather than silently normalizing
 
 ### 2. Pre-flight Checks
 
@@ -102,7 +102,7 @@ Write `docs/plans/<slug>.md` with this template:
 <!-- Session log, decisions, links -->
 ```
 
-Ask the user what **Type** to use (feature, bug, docs, infra). If the title makes it obvious, propose it and confirm.
+Ask the user what **Type** to use: `feature`, `bug`, `docs`, or `infra`. Always ask — don't infer from the title.
 
 ### 5. Commit and Push
 
