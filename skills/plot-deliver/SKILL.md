@@ -1,7 +1,7 @@
 ---
 name: plot-deliver
 description: >-
-  Verify all implementation is done, then archive the plan.
+  Verify all implementation is done, then deliver the plan.
   Part of the Plot workflow. Use on /plot-deliver.
 globs: []
 license: MIT
@@ -14,7 +14,7 @@ compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses
 
 # Plot: Deliver Plan
 
-Verify all implementation is done, then archive the plan. This workflow can be run manually (using git and forge CLI), by an AI agent interpreting this skill, or via a workflow script (once available).
+Verify all implementation is done, then deliver the plan. This workflow can be run manually (using git and forge CLI), by an AI agent interpreting this skill, or via a workflow script (once available).
 
 For docs/infra work, this is the end — live when merged. For features/bugs, `/plot-release` follows when you're ready to cut a versioned release.
 
@@ -30,28 +30,32 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
     - **Project board:** <your-project-name> (#<number>)  <!-- optional, for `gh pr edit --add-project` -->
     - **Branch prefixes:** idea/, feature/, bug/, docs/, infra/
     - **Plan directory:** docs/plans/
-    - **Archive directory:** docs/archive/
+    - **Active index:** docs/plans/active/
+    - **Delivered index:** docs/plans/delivered/
 
 ### 1. Parse Input
 
 If `$ARGUMENTS` is empty or missing:
-- List active plans: `ls docs/plans/*.md 2>/dev/null`
+- List active plans: `ls docs/plans/active/ 2>/dev/null`
 - If exactly one exists, propose: "Found plan `<slug>`. Deliver it?"
 - If multiple exist, list them and ask which one to deliver
-- If none exist, explain: "No active plans found in `docs/plans/`."
+- If none exist, explain: "No active plans found in `docs/plans/active/`."
 
 Extract `slug` from `$ARGUMENTS` (trimmed, lowercase, hyphens only).
 
 ### 2. Verify Plan Exists
 
-Check that `docs/plans/<slug>.md` exists on main.
+Check that an active plan exists for this slug: `ls docs/plans/active/<slug>.md` on main.
 
-- If not found, check `docs/archive/*-<slug>.md` — if found there: "Already delivered and archived."
-- If not found anywhere: "No plan found at `docs/plans/<slug>.md`."
+- If not in `active/`, check `docs/plans/delivered/<slug>.md` — if found there: "Already delivered."
+- Also check the Phase field in the plan file — if already `Delivered`, stop.
+- If not found anywhere: "No plan found for `<slug>`."
+
+Resolve the symlink to find the actual plan file path (e.g., `docs/plans/YYYY-MM-DD-<slug>.md`).
 
 ### 3. Read and Parse Plan
 
-Read `docs/plans/<slug>.md` and parse the `## Branches` section for PR references.
+Read the plan file (resolved from the `active/` symlink) and parse the `## Branches` section for PR references.
 
 Expected format after `/plot-approve`:
 ```markdown
@@ -74,13 +78,14 @@ gh pr view <number> --json state,isDraft --jq '{state: .state, isDraft: .isDraft
 
 - If all are `MERGED`: proceed to step 5
 - If any are `OPEN`:
-  - List them and ask the user: "These PRs are still open. Merge them first, or deliver anyway?"
+  - If any open PRs have `isDraft: true`, list them and run `gh pr ready <number>` to mark each one ready for review — this is part of the delivery flow, not optional
+  - List all remaining open PRs and ask the user: "These PRs are still open. Merge them first, or deliver anyway?"
   - If user declines, stop and list the unfinished PRs
 - If any are `CLOSED` (not merged): warn — these need manual attention
 
 ### 5. Verify Plan Completeness
 
-> **Graceful degradation:** For facilitators without deep reasoning capability (e.g., Haiku), skip the detailed diff review below. Instead: verify all PRs are merged (step 4), then ask the user: "All implementation PRs are merged. Ready to archive this plan?" The detailed comparison is valuable but not required — human judgment is the final gate regardless.
+> **Graceful degradation:** For facilitators without deep reasoning capability (e.g., Haiku), skip the detailed diff review below. Instead: verify all PRs are merged (step 4), then ask the user: "All implementation PRs are merged. Ready to deliver this plan?" The detailed comparison is valuable but not required — human judgment is the final gate regardless.
 
 Compare what the plan promised against what was actually delivered.
 
@@ -98,9 +103,9 @@ Compare what the plan promised against what was actually delivered.
    - **Missing** — no evidence found in any PR
 
 4. **Present the checklist** to the user and **ask to confirm** the plan is complete enough to deliver.
-   - If all items are done: "All deliverables verified. Proceed with archive?"
+   - If all items are done: "All deliverables verified. Proceed with delivery?"
    - If any are partial/missing: list them and ask "Deliver anyway, or hold off?"
-   - If the user declines, stop — do not archive.
+   - If the user declines, stop — do not deliver.
 
 ### 6. Check for Release Note Entries
 
@@ -122,27 +127,38 @@ else:
 
 If tooling was found but no release note entries exist for this plan's work, **warn** the user: "No release note entries found for this feature. Consider adding one before releasing."
 
-This is a warning, not a blocker — proceed with archiving regardless.
+This is a warning, not a blocker — proceed with delivery regardless.
 
 Skip this step entirely for docs/infra plans (they don't need release notes).
 
-### 7. Archive Plan
+### 7. Deliver Plan
+
+The plan file stays in place — only the symlink moves from `active/` to `delivered/`.
 
 ```bash
-git checkout main
-git pull origin main
+git checkout main && git pull origin main
+
+# Update Phase field in the plan file
+# Change **Phase:** Approved → **Phase:** Delivered
+# Add - **Delivered:** YYYY-MM-DD to the Status section
 DELIVER_DATE=$(date -u +%Y-%m-%d)
-git mv docs/plans/<slug>.md docs/archive/${DELIVER_DATE}-<slug>.md
-git add docs/archive/${DELIVER_DATE}-<slug>.md
+
+# Move symlink from active/ to delivered/
+git rm docs/plans/active/<slug>.md
+ln -s ../YYYY-MM-DD-<slug>.md docs/plans/delivered/<slug>.md
+git add docs/plans/delivered/<slug>.md docs/plans/YYYY-MM-DD-<slug>.md
 git commit -m "plot: deliver <slug>"
 git push
 ```
+
+(Replace `YYYY-MM-DD-<slug>.md` with the actual date-prefixed filename from the resolved symlink.)
 
 ### 8. Summary
 
 Print:
 - Delivered: `<slug>`
-- Archived to: `docs/archive/<DELIVER_DATE>-<slug>.md`
+- Plan file: `docs/plans/YYYY-MM-DD-<slug>.md` (unchanged location)
+- Index: moved from `active/` to `delivered/`
 - All implementation PRs: merged
 - Type reminder:
   - If feature/bug: "Run `/plot-release` when ready to cut a versioned release."

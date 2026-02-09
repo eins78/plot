@@ -1,10 +1,10 @@
 # plot-deliver
 
-Verify all implementation is done, then archive the plan.
+Verify all implementation is done, then deliver the plan.
 
 ## Purpose
 
-Spoke of the Plot workflow. Handles the delivery phase: verifies all implementation PRs are merged, performs a completeness check (plan deliverables vs actual PR diffs using parallel subagents), and archives the plan file from `docs/plans/` to `docs/archive/` with a date prefix. For features/bugs, `/plot-release` follows; for docs/infra, delivery means the work is live.
+Spoke of the Plot workflow. Handles the delivery phase: verifies all implementation PRs are merged, performs a completeness check (plan deliverables vs actual PR diffs using parallel subagents), and delivers the plan (moves the symlink from `active/` to `delivered/`, updates the Phase field). Plan files never move — they stay at their date-prefixed path. For features/bugs, `/plot-release` follows; for docs/infra, delivery means the work is live.
 
 ## Tier
 
@@ -14,7 +14,7 @@ Spoke of the Plot workflow. Handles the delivery phase: verifies all implementat
 
 Validated as part of the Plot end-to-end lifecycle tests:
 
-- **test-v2:** Full 4-phase lifecycle (Draft through Released). Verified PR merge checking, plan archival with dated prefix, and the completeness verification flow.
+- **test-v2:** Full 4-phase lifecycle (Draft through Released). Verified PR merge checking, plan delivery with dated prefix, and the completeness verification flow.
 - Used for real work: delivered BDD test coverage via `/plot-deliver development`.
 
 ## Provenance
@@ -31,4 +31,4 @@ See [plot/README.md](../plot/README.md) for the full development history and [pl
 ## Planned Improvements
 
 - Structured completeness checklist output for easier review.
-- Support for partial delivery (archive completed branches, keep plan active for remaining work).
+- Support for partial delivery (deliver completed branches, keep plan active for remaining work).

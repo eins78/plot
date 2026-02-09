@@ -4,7 +4,7 @@ Create a versioned release from delivered plans.
 
 ## Purpose
 
-Spoke of the Plot workflow. Handles the release phase: collects changelog entries from archived plans delivered since the last release, composes release notes, bumps the version in `package.json` (if present), updates `CHANGELOG.md`, creates an annotated git tag, and pushes. Only feature and bug plans are included in release notes — docs/infra are live when merged.
+Spoke of the Plot workflow. Verifies release readiness: discovers delivered plans since the last release, collects changelog entries, cross-checks release notes against actual work, and presents recommended next steps (version bump, tag, push) for the user to confirm. Does not execute release steps automatically — the user controls when versions are bumped and tags are pushed. Only feature and bug plans are included in release notes — docs/infra are live when merged.
 
 ## Tier
 

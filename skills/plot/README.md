@@ -13,8 +13,8 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 | `plot/SKILL.md` | Hub: overview, lifecycle diagrams, setup, phases, conventions, guardrails, dispatcher | ~190 lines |
 | `plot-idea/SKILL.md` | Create plan: idea branch + plan file + draft PR (8 steps) | ~155 lines |
 | `plot-approve/SKILL.md` | Approve plan: merge PR, fan out impl branches/PRs (8 steps) | ~185 lines |
-| `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, archive (8 steps) | ~140 lines |
-| `plot-release/SKILL.md` | Release: version bump, changelog assembly, git tag (6 steps) | ~155 lines |
+| `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, deliver (8 steps) | ~155 lines |
+| `plot-release/SKILL.md` | Release: verify readiness, cross-check notes, guide release (6 steps) | ~165 lines |
 | `plot/scripts/plot-pr-state.sh` | Helper: query plan PR state (draft/ready/merged/closed) | 41 lines |
 | `plot/scripts/plot-impl-status.sh` | Helper: query all impl PR states for a slug from plan on main | 63 lines |
 | `plot/changelog.md` | Complete evolution history across 5 development sessions | ~200 lines |
@@ -35,7 +35,7 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 
 5. **Approval metadata on branches** — Each implementation branch carries the plan file with approval context (timestamp, approver, assignee), providing both a meaningful first commit and traceability.
 
-6. **Dated archives** — `YYYY-MM-DD-slug.md` sorts chronologically and answers "when did this ship?" at a glance.
+6. **Plans stay in place** — `YYYY-MM-DD-slug.md` files never move. Symlink dirs (`active/`, `delivered/`) provide filtered views. Links never break.
 
 7. **Smart defaults** — Commands discover context (open PRs, active plans) rather than demanding exact input. Missing arguments trigger helpful suggestions, not errors.
 

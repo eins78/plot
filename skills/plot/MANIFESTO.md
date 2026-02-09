@@ -4,7 +4,7 @@ Plot is a git-native planning system for software development. It is designed fo
 
 ## Core Belief
 
-Plans belong in git. Not in a separate issue tracker, not in a project management tool, not in a spreadsheet. Plans are markdown files — written, reviewed, and versioned just like source code. They live on branches, merge through pull requests, and archive with date stamps. Anyone with repo access can `ls docs/plans/` and see exactly what's in flight. No dashboard logins, no access tiers, no sync problems.
+Plans belong in git. Not in a separate issue tracker, not in a project management tool, not in a spreadsheet. Plans are markdown files — written, reviewed, and versioned just like source code. They live on branches, merge through pull requests, and stay in place forever with date-prefixed filenames. Anyone with repo access can `ls docs/plans/active/` and see exactly what's in flight. No dashboard logins, no access tiers, no sync problems.
 
 Plot works for any team composition, but it is especially designed for a specific one: **human decision-makers** working with **AI facilitators** (for refining ideas, planning, and process administration) and **AI coding agents** (implementing plans as autonomously as current models allow). In this model, humans always own the decisions — approval, prioritization, release, verification. Agents surface information, suggest actions, and do implementation work. But every step of the workflow can also be done by a human with basic git knowledge. The AI is the designed-for sweet spot, not a hard requirement.
 
@@ -16,7 +16,7 @@ These are the founding beliefs that guide Plot's design. When a proposed change 
 
 Plans are markdown files committed to git. Pull requests are workflow metadata. A project board (if used) is a read-only reflection of PR state — useful to glance at, but never the source of truth. There is no external tracker, no database, no API to sync with. If it's not in git, it doesn't exist.
 
-This also makes plans transparent. Plans-as-files are more visible than backlog items in a tracker. Anyone with repo access can browse `docs/plans/` and `docs/archive/` without needing credentials for a separate tool. The full history of every plan — drafts, revisions, approvals — is in the git log.
+This also makes plans transparent. Plans-as-files are more visible than backlog items in a tracker. Anyone with repo access can browse `docs/plans/active/` and `docs/plans/delivered/` without needing credentials for a separate tool. The full history of every plan — drafts, revisions, approvals — is in the git log.
 
 ### 2. Plans merge before implementation
 
@@ -44,9 +44,9 @@ Commands discover context rather than demanding exact arguments. If there's one 
 
 Each command checks the current workflow phase before acting. You cannot approve an unreviewed draft. You cannot deliver a plan with open implementation PRs. You cannot release undelivered work. These guardrails prevent common workflow mistakes at the point where they'd cause the most confusion.
 
-### 8. Dated archives
+### 8. Plans stay in place
 
-Delivered plans move from `docs/plans/` to `docs/archive/YYYY-MM-DD-slug.md`. The date prefix sorts files chronologically and answers "when did this ship?" at a glance, without parsing git history.
+Plan files are created with a date prefix (`docs/plans/YYYY-MM-DD-slug.md`) and never move. Symlink directories (`docs/plans/active/`, `docs/plans/delivered/`) provide filtered views by phase. Links from PR bodies and other references point to the date-prefixed file, so they never break. The date prefix sorts files chronologically and answers "when did this start?" at a glance.
 
 ### 9. Small models welcome
 
@@ -56,7 +56,7 @@ Facilitator tasks — reading git state, running commands, printing summaries �
 
 Plot has four plan-level phases: **Draft**, **Approved**, **Delivered**, and **Released**.
 
-A plan starts as a draft on an `idea/` branch. When the plan is reviewed and approved, it merges to main and spawns implementation branches (`feature/`, `bug/`, `docs/`, `infra/`). When all implementation PRs are merged, the plan is delivered — archived with a date stamp. For features and bugs, a separate release step cuts a versioned tag with changelog entries. For docs and infra work, delivery is the end — it's live when merged to main.
+A plan starts as a draft on an `idea/` branch. When the plan is reviewed and approved, it merges to main and spawns implementation branches (`feature/`, `bug/`, `docs/`, `infra/`). When all implementation PRs are merged, the plan is delivered — its symlink moves from `active/` to `delivered/` and the Phase field is updated. For features and bugs, a separate release step cuts a versioned tag with changelog entries. For docs and infra work, delivery is the end — it's live when merged to main.
 
 The release phase includes a verification loop. An RC (release candidate) tag is cut from delivered plans, and a verification checklist is generated — one item per delivered feature or bug fix. The team tests against the checklist: automated CI for technical tests, manual verification for user stories. Bugs found during this endgame phase are fixed via normal `bug/` branches, merged to main, and a new RC is cut. When all checklist items pass, a final release tag is created.
 
@@ -71,7 +71,7 @@ The `/plot` dispatcher reads your current git state and tells you what to do nex
 
 Not every step in the workflow should move at the same speed. Plot recognizes three pacing categories:
 
-**Automate ASAP** — Mechanical transitions with no judgment required. These should be scripted and fast. Examples: merging an approved plan PR, creating implementation branches, archiving a delivered plan, cutting an RC tag, generating a verification checklist, creating a final release tag.
+**Automate ASAP** — Mechanical transitions with no judgment required. These should be scripted and fast. Examples: merging an approved plan PR, creating implementation branches, delivering a plan (moving symlink), cutting an RC tag, generating a verification checklist, creating a final release tag.
 
 **Natural pauses** — Steps where real work happens and the workflow should wait. These aren't bottlenecks; they're the point. Examples: implementing a feature on a branch, running the endgame verification checklist, writing a plan.
 

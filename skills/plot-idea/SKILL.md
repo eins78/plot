@@ -28,7 +28,8 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
     - **Project board:** <your-project-name> (#<number>)  <!-- optional, for `gh pr edit --add-project` -->
     - **Branch prefixes:** idea/, feature/, bug/, docs/, infra/
     - **Plan directory:** docs/plans/
-    - **Archive directory:** docs/archive/
+    - **Active index:** docs/plans/active/
+    - **Delivered index:** docs/plans/delivered/
 
 ### 1. Parse Input
 
@@ -48,6 +49,10 @@ Extract `slug` and `title` from `$ARGUMENTS`:
 - Warn if working tree has uncommitted changes (offer to stash)
 - Verify `gh auth status` has project scope
 - Check that branch `idea/<slug>` does not already exist (if it does, ask whether to check it out or pick a new name)
+- **Duplicate detection:**
+  - `ls docs/plans/active/ 2>/dev/null` + `gh pr list --json headRefName --jq '.[].headRefName' | grep '^idea/'` to find existing plans and idea branches
+  - **Hard gate:** if a plan with the identical slug already exists (file or branch), stop and ask the user to pick a different name
+  - **Soft warning:** if any existing plan title shares 3+ significant words with the proposed title, warn the user and ask to confirm this is intentionally separate work (only check Draft/Approved plans, not Delivered ones)
 
 ### 3. Create Branch
 
@@ -58,7 +63,11 @@ git checkout -b idea/<slug> origin/main
 
 ### 4. Create Plan File
 
-Write `docs/plans/<slug>.md` with this template:
+```bash
+CREATE_DATE=$(date -u +%Y-%m-%d)
+```
+
+Write `docs/plans/${CREATE_DATE}-<slug>.md` with this template:
 
 ```markdown
 # <title>
@@ -102,12 +111,23 @@ Write `docs/plans/<slug>.md` with this template:
 <!-- Session log, decisions, links -->
 ```
 
-Ask the user what **Type** to use: `feature`, `bug`, `docs`, or `infra`. Always ask — don't infer from the title.
+Ask the user what **Type** to use, presenting this reference:
 
-### 5. Commit and Push
+| Type | Use when | Examples |
+|------|----------|----------|
+| `feature` | New user-facing functionality | API endpoint, UI component, CLI command |
+| `bug` | Fixing a defect | Crash fix, data corruption, incorrect output |
+| `docs` | Documentation-only | README updates, API docs, guides |
+| `infra` | CI, build, tooling, release automation | GitHub Actions, Dockerfile, linter config, deps |
+
+Always ask — don't infer from the title.
+
+### 5. Create Active Symlink and Commit
 
 ```bash
-git add docs/plans/<slug>.md
+mkdir -p docs/plans/active docs/plans/delivered
+ln -s ../${CREATE_DATE}-<slug>.md docs/plans/active/<slug>.md
+git add docs/plans/${CREATE_DATE}-<slug>.md docs/plans/active/<slug>.md
 git commit -m "plot: <title>"
 git push -u origin idea/<slug>
 ```
@@ -123,7 +143,7 @@ gh pr create \
   --body "$(cat <<'EOF'
 ## Plan
 
-See [`docs/plans/<slug>.md`](../blob/idea/<slug>/docs/plans/<slug>.md) on this branch.
+See [`docs/plans/${CREATE_DATE}-<slug>.md`](../blob/idea/<slug>/docs/plans/${CREATE_DATE}-<slug>.md) on this branch.
 
 Refine the plan, then mark ready for review with `gh pr ready`. Once reviewed, run `/plot-approve <slug>` to merge and start implementation.
 
@@ -147,7 +167,8 @@ If no project board is configured, skip this step.
 
 Print:
 - Branch: `idea/<slug>`
-- Plan file: `docs/plans/<slug>.md`
+- Plan file: `docs/plans/<CREATE_DATE>-<slug>.md`
+- Active index: `docs/plans/active/<slug>.md` (symlink)
 - PR URL (draft)
 - Next steps:
   1. Refine the plan (especially the **Branches** section)
