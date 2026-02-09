@@ -3,6 +3,7 @@
 # Usage: plot-impl-status.sh <slug>
 # Reads the plan file for <slug> (date-prefixed in docs/plans/) and checks PR states
 # Output: JSON array of {branch, number, state, isDraft, title}
+# Designed for small-model consumption: structured JSON output, no interpretation needed.
 
 set -euo pipefail
 

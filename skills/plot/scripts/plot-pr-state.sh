@@ -2,6 +2,7 @@
 # Plot helper: Get plan PR state for a slug
 # Usage: plot-pr-state.sh <slug>
 # Output: JSON with number, state, isDraft, merged fields
+# Designed for small-model consumption: structured JSON output, no interpretation needed.
 
 set -euo pipefail
 

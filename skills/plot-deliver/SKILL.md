@@ -33,6 +33,17 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
     - **Active index:** docs/plans/active/
     - **Delivered index:** docs/plans/delivered/
 
+## Model Guidance
+
+| Steps | Min. Tier | Notes |
+|-------|-----------|-------|
+| 1-4. Parse through Verify PRs | Small | Git/gh commands, helper script, state checks |
+| 5. Verify Completeness | Frontier (orchestrator) + Small (subagents) | Orchestrator extracts deliverables and consolidates; small subagents gather PR diffs in parallel |
+| 6. Release Note Check | Small | File existence checks |
+| 7-8. Deliver and Summary | Small | File ops, git commands, template |
+
+Step 5 is the prime example of subagent delegation: a frontier orchestrator handles the judgment (extracting deliverables, consolidating Done/Partial/Missing), while small subagents handle the data collection (running `gh pr diff`, reading PR metadata) in parallel. Without subagents, the frontier model does everything sequentially.
+
 ### 1. Parse Input
 
 If `$ARGUMENTS` is empty or missing:
@@ -85,7 +96,10 @@ gh pr view <number> --json state,isDraft --jq '{state: .state, isDraft: .isDraft
 
 ### 5. Verify Plan Completeness
 
-> **Graceful degradation:** For facilitators without deep reasoning capability (e.g., Haiku), skip the detailed diff review below. Instead: verify all PRs are merged (step 4), then ask the user: "All implementation PRs are merged. Ready to deliver this plan?" The detailed comparison is valuable but not required — human judgment is the final gate regardless.
+> **Model tiers for this step:**
+> - **Frontier (e.g., Opus):** Full deliverable extraction, parallel PR diff review via subagents (small-model subagents gather diffs, frontier consolidates), Done/Partial/Missing checklist.
+> - **Mid (e.g., Sonnet):** Extract deliverables and check PR titles/descriptions (skip full diff review). Can delegate PR metadata collection to small subagents. Present a simplified checklist based on PR metadata rather than code changes. Ask user to verify.
+> - **Small (e.g., Haiku):** Skip entirely. Verify all PRs are merged (step 4), then ask: "All implementation PRs are merged. Ready to deliver this plan?" Human judgment is the final gate.
 
 Compare what the plan promised against what was actually delivered.
 

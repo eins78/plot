@@ -31,6 +31,17 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
     - **Active index:** docs/plans/active/
     - **Delivered index:** docs/plans/delivered/
 
+## Model Guidance
+
+| Steps | Min. Tier | Notes |
+|-------|-----------|-------|
+| 1-3. Parse through Merge | Small | Git/gh commands, state checks |
+| 4. Read and Parse Plan | Small | Structured markdown parsing |
+| 4b. Branch Conflicts | Mid | Cross-referencing multiple plan files |
+| 5-8. Create Branches through Summary | Small | Git/gh commands, templates |
+
+Nearly all steps are mechanical. Step 4b (branch conflict detection) requires reading multiple plan files and comparing branch lists — mid-tier reasoning.
+
 ### 1. Parse Input
 
 If `$ARGUMENTS` is empty or missing:
@@ -108,6 +119,8 @@ Before creating branches, check if any branch name from the `## Branches` sectio
 - If any branch name in the current plan already appears in another plan, warn the user and ask to confirm before proceeding
 
 Also check if any of the branches already exist as remote branches (`git ls-remote --heads origin <branch-name>`). If so, warn — the branch may be from a previous run of `/plot-approve` or from unrelated work.
+
+> **Smaller models:** Skip cross-plan branch conflict detection. Only check if the branch already exists on the remote (`git ls-remote --heads origin <branch>`). Cross-plan overlap detection requires mid-tier reasoning.
 
 ### 5. Create Implementation Branches and PRs
 

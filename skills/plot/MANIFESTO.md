@@ -50,7 +50,17 @@ Plan files are created with a date prefix (`docs/plans/YYYY-MM-DD-slug.md`) and 
 
 ### 9. Small models welcome
 
-Facilitator tasks — reading git state, running commands, printing summaries — must work with smaller, faster models (Sonnet, Haiku), not just frontier models. This means: explicit step-by-step instructions over narrative prose, structured data (JSON from helper scripts) over free-form parsing, and concrete examples over abstract descriptions. Steps requiring judgment (completeness verification, release note cross-checking) should degrade gracefully: a smaller model asks for human confirmation where a larger model might decide autonomously, but the workflow never breaks.
+Facilitator tasks — reading git state, running commands, printing summaries — must work with smaller, faster models, not just frontier models. Plot defines three capability tiers:
+
+- **Small (e.g., Haiku)** — Mechanical steps: running commands, parsing structured output (JSON from helper scripts), filling templates, printing summaries. No interpretation of unstructured content.
+- **Mid (e.g., Sonnet)** — Moderate reasoning: heuristic comparisons (title similarity, version bump suggestions), discovery logic with clear rules, structured analysis where the criteria are explicit.
+- **Frontier (e.g., Opus)** — Deep judgment: completeness verification (comparing plan deliverables against PR diffs), semantic gap detection in release notes, any step that requires interpreting unstructured prose against unstructured code changes.
+
+Each skill's `## Model Guidance` section maps steps to tiers. Steps that exceed a model's tier degrade gracefully: a smaller model asks for human confirmation where a larger model might decide autonomously, but the workflow never breaks.
+
+**Subagent delegation:** When subagents are available (e.g., Claude Code's Task tool), a mid or frontier orchestrator can delegate mechanical subtasks to small-model subagents running in parallel. Example: in `/plot-deliver` step 5, a frontier orchestrator extracts deliverables (judgment), then launches small subagents to gather PR diffs and metadata (mechanical), then consolidates results (judgment). The orchestrator handles reasoning; subagents handle data collection. This gives frontier-quality results at small-model cost for the bulk of the work.
+
+Design implications: explicit step-by-step instructions over narrative prose, structured data over free-form parsing, concrete examples over abstract descriptions.
 
 ## Lifecycle
 

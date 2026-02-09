@@ -28,6 +28,17 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
     - **Active index:** docs/plans/active/
     - **Delivered index:** docs/plans/delivered/
 
+## Model Guidance
+
+| Steps | Min. Tier | Notes |
+|-------|-----------|-------|
+| 1. Read State | Small | Git/gh commands, file listing |
+| 2. Detect Context | Small | Branch name pattern matching |
+| 3. Detect Issues | Small (most), Mid (overlap) | Overlapping plans (3+ shared words) needs mid-tier |
+| 4. Status Summary | Small | Template formatting |
+
+All dispatcher steps are mechanical except the "Overlapping plans" heuristic in step 3, which requires comparing plan titles. A small model should skip title comparison and only flag exact slug duplicates.
+
 ## Lifecycle
 
 ### Feature / Bug (full lifecycle)
@@ -186,6 +197,8 @@ Flag any problems found:
 - **Phase mismatches**: plan says Draft but PR is non-draft, or plan says Approved but PR is still open
 - **Stale drafts**: impl PRs that have been in draft state for more than 7 days
 - **Overlapping plans**: Draft/Approved plans with titles sharing 3+ significant words — flag in the status summary as informational (no blocking)
+
+> **Smaller models:** Skip title-similarity detection. Only report exact slug matches (identical filenames). Title overlap detection requires mid-tier reasoning.
 
 ### 4. Status Summary
 

@@ -31,6 +31,16 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
     - **Active index:** docs/plans/active/
     - **Delivered index:** docs/plans/delivered/
 
+## Model Guidance
+
+| Steps | Min. Tier | Notes |
+|-------|-----------|-------|
+| 1. Parse Input | Small | String parsing |
+| 2. Pre-flight Checks | Small (hard gate), Mid (soft warning) | Slug collision is mechanical; title similarity needs mid-tier |
+| 3-8. Create Branch through Summary | Small | Git/gh commands, templates, file ops |
+
+The entire skill is small-model capable except the soft duplicate warning (title similarity in step 2).
+
 ### 1. Parse Input
 
 If `$ARGUMENTS` is empty or missing:
@@ -53,6 +63,8 @@ Extract `slug` and `title` from `$ARGUMENTS`:
   - `ls docs/plans/active/ 2>/dev/null` + `gh pr list --json headRefName --jq '.[].headRefName' | grep '^idea/'` to find existing plans and idea branches
   - **Hard gate:** if a plan with the identical slug already exists (file or branch), stop and ask the user to pick a different name
   - **Soft warning:** if any existing plan title shares 3+ significant words with the proposed title, warn the user and ask to confirm this is intentionally separate work (only check Draft/Approved plans, not Delivered ones)
+
+> **Smaller models:** Skip the title similarity check. Enforce the hard gate (identical slug) only. Ask the user: "Could not check for similar plan titles. Please verify manually that this doesn't overlap with existing plans."
 
 ### 3. Create Branch
 
