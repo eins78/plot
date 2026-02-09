@@ -9,12 +9,12 @@ metadata:
   author: eins78
   repo: https://github.com/eins78/skills
   version: 1.0.0-beta.1
-compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
+compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
 # Plot: Approve Plan
 
-Merge an approved plan and fan out into implementation branches.
+Merge an approved plan and fan out into implementation branches. This workflow can be run manually (using git and forge CLI), by an AI agent interpreting this skill, or via a workflow script (once available).
 
 **Input:** `$ARGUMENTS` is the `<slug>` of an existing idea.
 

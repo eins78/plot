@@ -9,12 +9,12 @@ metadata:
   author: eins78
   repo: https://github.com/eins78/skills
   version: 1.0.0-beta.1
-compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
+compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
 # Plot: Deliver Plan
 
-Verify all implementation is done, then archive the plan.
+Verify all implementation is done, then archive the plan. This workflow can be run manually (using git and forge CLI), by an AI agent interpreting this skill, or via a workflow script (once available).
 
 For docs/infra work, this is the end — live when merged. For features/bugs, `/plot-release` follows when you're ready to cut a versioned release.
 

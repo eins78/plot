@@ -9,7 +9,7 @@ metadata:
   author: eins78
   repo: https://github.com/eins78/skills
   version: 1.0.0-beta.1
-compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
+compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
 # Plot: Create Idea

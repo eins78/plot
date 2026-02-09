@@ -1,12 +1,12 @@
 # Plot Manifesto
 
-Plot is a git-native planning system for AI-assisted software development. It is experimental, still taking shape through real-world usage, and currently in alpha.
+Plot is a git-native planning system for software development. It is designed for teams where humans make decisions and AI agents help plan and implement, but requires nothing more than git, a forge with pull request review, and markdown. It is experimental, still taking shape through real-world usage, and currently in alpha.
 
 ## Core Belief
 
-If your development workflow starts inside an AI coding agent, your planning system should live there too — in git, in markdown, on branches. Not in a separate issue tracker, not in a project management tool, not in a spreadsheet. Plans are code artifacts: written, reviewed, and versioned just like source code.
+Plans belong in git. Not in a separate issue tracker, not in a project management tool, not in a spreadsheet. Plans are markdown files — written, reviewed, and versioned just like source code. They live on branches, merge through pull requests, and archive with date stamps. Anyone with repo access can `ls docs/plans/` and see exactly what's in flight. No dashboard logins, no access tiers, no sync problems.
 
-Plot exists because we wanted to plan multiple ideas, read them as formatted text, and implement them in parallel — all without leaving the terminal or switching context to an external tool.
+Plot works for any team composition, but it is especially designed for a specific one: **human decision-makers** working with **AI facilitators** (for refining ideas, planning, and process administration) and **AI coding agents** (implementing plans as autonomously as current models allow). In this model, humans always own the decisions — approval, prioritization, release, verification. Agents surface information, suggest actions, and do implementation work. But every step of the workflow can also be done by a human with basic git knowledge. The AI is the designed-for sweet spot, not a hard requirement.
 
 ## Principles
 
@@ -14,7 +14,9 @@ These are the founding beliefs that guide Plot's design. When a proposed change 
 
 ### 1. Git is the database
 
-Plans are markdown files committed to git. Pull requests are workflow metadata. The GitHub Projects board is a read-only reflection of PR state — useful to glance at, but never the source of truth. There is no external tracker, no database, no API to sync with. If it's not in git, it doesn't exist.
+Plans are markdown files committed to git. Pull requests are workflow metadata. A project board (if used) is a read-only reflection of PR state — useful to glance at, but never the source of truth. There is no external tracker, no database, no API to sync with. If it's not in git, it doesn't exist.
+
+This also makes plans transparent. Plans-as-files are more visible than backlog items in a tracker. Anyone with repo access can browse `docs/plans/` and `docs/archive/` without needing credentials for a separate tool. The full history of every plan — drafts, revisions, approvals — is in the git log.
 
 ### 2. Plans merge before implementation
 
@@ -23,6 +25,8 @@ This is the key design insight that makes everything else work. The plan file la
 ### 3. Commands, not code
 
 Plot's commands are markdown instructions that an AI agent interprets — not shell scripts or compiled programs. This makes them resilient: when a PR is already merged, when arguments are missing, when local state is stale, the agent adapts rather than crashing. The trade-off is that behavior isn't perfectly deterministic, but in practice the flexibility matters more than the precision.
+
+> **Editorial note:** This principle is under active discussion. Plot now includes shell helper scripts (`scripts/plot-pr-state.sh`, `scripts/plot-impl-status.sh`) and plans to add workflow scripts that compose them. The relationship between skills (adaptive, AI-interpreted) and scripts (deterministic, human-executable) needs a clearer articulation. See the Pacing section below for how mechanical vs. judgment-requiring steps inform this split.
 
 ### 4. One plan, many branches
 
@@ -46,11 +50,30 @@ Delivered plans move from `docs/plans/` to `docs/archive/YYYY-MM-DD-slug.md`. Th
 
 ## Lifecycle
 
-Plot has four phases: **Draft**, **Approved**, **Delivered**, and **Released**.
+Plot has four plan-level phases: **Draft**, **Approved**, **Delivered**, and **Released**.
 
 A plan starts as a draft on an `idea/` branch. When the plan is reviewed and approved, it merges to main and spawns implementation branches (`feature/`, `bug/`, `docs/`, `infra/`). When all implementation PRs are merged, the plan is delivered — archived with a date stamp. For features and bugs, a separate release step cuts a versioned tag with changelog entries. For docs and infra work, delivery is the end — it's live when merged to main.
 
+The release phase includes a verification loop. An RC (release candidate) tag is cut from delivered plans, and a verification checklist is generated — one item per delivered feature or bug fix. The team tests against the checklist: automated CI for technical tests, manual verification for user stories. Bugs found during this endgame phase are fixed via normal `bug/` branches, merged to main, and a new RC is cut. When all checklist items pass, a final release tag is created.
+
+- **RC tags:** `v1.2.0-rc.1`, `v1.2.0-rc.2`, etc.
+- **Verification checklist:** generated from delivered plans, lives as `docs/releases/v<version>-checklist.md` (git-native, like everything else).
+- **Endgame fixes:** normal branches, normal PRs, new RC. No special process.
+- **Sign-off:** humans give final OK on each checklist item. Agents can guide testing but never sign off.
+
 The `/plot` dispatcher reads your current git state and tells you what to do next.
+
+## Pacing
+
+Not every step in the workflow should move at the same speed. Plot recognizes three pacing categories:
+
+**Automate ASAP** — Mechanical transitions with no judgment required. These should be scripted and fast. Examples: merging an approved plan PR, creating implementation branches, archiving a delivered plan, cutting an RC tag, generating a verification checklist, creating a final release tag.
+
+**Natural pauses** — Steps where real work happens and the workflow should wait. These aren't bottlenecks; they're the point. Examples: implementing a feature on a branch, running the endgame verification checklist, writing a plan.
+
+**Human-paced** — Steps that require a human decision. No agent should rush these. Examples: reviewing and approving a plan, deciding when to release, signing off on a verification checklist item, choosing the version number.
+
+The meta-principle: **don't over-complicate because AI doesn't feel friction.** Every step must be executable by a human with basic git knowledge. If a workflow step can't be done by hand, it's too complex. Scripts and AI make it faster, not possible.
 
 ## What Plot Is Not
 
@@ -82,5 +105,6 @@ When considering a change to Plot, ask:
 3. Does it fail gracefully with helpful suggestions, or does it break on unexpected state?
 4. Is it a convention that projects opt into, or configuration that Plot enforces?
 5. Would removing it make the system simpler without losing something essential?
+6. Could a human with basic git knowledge execute this manually?
 
-If the answer to question 5 is yes, remove it. Plot should stay lean. The goal is a small set of strong conventions, not a large set of flexible options.
+If the answer to question 5 is yes, remove it. If the answer to question 6 is no, simplify it. Plot should stay lean. The goal is a small set of strong conventions, not a large set of flexible options.

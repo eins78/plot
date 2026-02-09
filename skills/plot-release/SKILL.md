@@ -9,16 +9,18 @@ metadata:
   author: eins78
   repo: https://github.com/eins78/skills
   version: 1.0.0-beta.1
-compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
+compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
 # Plot: Cut a Release
 
-Create a versioned release from delivered plans.
+Create a versioned release from delivered plans. This workflow can be run manually (using git and forge CLI), by an AI agent interpreting this skill, or via a workflow script (once available).
 
-**Input:** `$ARGUMENTS` is optional. Can be a version number (e.g., `1.2.0`) or a bump type (`major`, `minor`, `patch`).
+**Input:** `$ARGUMENTS` is optional. Can be:
+- `rc` — cut a release candidate tag and generate a verification checklist
+- A version number (e.g., `1.2.0`) or bump type (`major`, `minor`, `patch`) — cut the final release
 
-Example: `/plot-release minor`
+Examples: `/plot-release rc`, `/plot-release minor`, `/plot-release 1.2.0`
 
 ## Setup
 
@@ -38,20 +40,81 @@ Check for the latest git tag:
 git tag --sort=-v:refname | head -1
 ```
 
-If `$ARGUMENTS` specifies a version:
+If `$ARGUMENTS` is `rc`:
+- Determine the target version (same rules as below — check delivered plans, suggest bump type)
+- Check for existing RC tags for this version: `git tag --list "v<version>-rc.*"`
+- Next RC number: if no existing RCs, use `rc.1`; otherwise increment
+- Proceed to **step 2A (RC path)**
+
+If `$ARGUMENTS` specifies a version (e.g., `1.2.0`):
 - Use it directly (validate it's valid semver)
+- Proceed to **step 2B (final release path)**
 
 If `$ARGUMENTS` specifies a bump type (`major`, `minor`, `patch`):
 - Calculate the new version from the latest tag
+- Proceed to **step 2B (final release path)**
 
 If `$ARGUMENTS` is empty:
-- Look at the delivered plans since the last release to suggest a bump type:
+- Check if there's an open RC checklist (`docs/releases/v*-checklist.md`) with all items checked
+- If yes: propose cutting the final release for that version
+- If no: look at delivered plans since the last release to suggest a bump type:
   - Any features → suggest `minor`
   - Only bug fixes → suggest `patch`
   - Breaking changes noted in changelogs → suggest `major`
 - Propose the version and confirm with the user
 
-### 2. Generate Release Notes
+### 2A. RC Path — Cut Release Candidate
+
+**Tag the RC:**
+
+```bash
+git tag -a v<version>-rc.<n> -m "Release candidate v<version>-rc.<n>"
+git push origin v<version>-rc.<n>
+```
+
+**Generate verification checklist:**
+
+Collect all archived plans since the last release (same discovery as step 2B). For each delivered feature or bug plan, extract the `## Changelog` section and create a checklist item.
+
+```bash
+mkdir -p docs/releases
+```
+
+Write `docs/releases/v<version>-checklist.md`:
+
+```markdown
+# Release Checklist — v<version>
+
+RC: v<version>-rc.<n> (YYYY-MM-DD)
+
+## Verification
+
+- [ ] <feature/bug slug> — <changelog summary>
+- [ ] <feature/bug slug> — <changelog summary>
+
+## Automated Tests
+
+- [ ] CI passes on RC tag
+
+## Sign-off
+
+- [ ] All items verified by: ___
+- [ ] Final release approved by: ___
+```
+
+```bash
+git add docs/releases/v<version>-checklist.md
+git commit -m "release: v<version>-rc.<n> checklist"
+git push
+```
+
+**Summary (RC):**
+- RC tag: `v<version>-rc.<n>`
+- Checklist: `docs/releases/v<version>-checklist.md`
+- Plans included: list of slugs
+- Next: test against checklist. If bugs found, fix via normal `bug/` branches, merge, then run `/plot-release rc` again for next RC. When all items pass, run `/plot-release` to cut the final release.
+
+### 2B. Final Release Path — Generate Release Notes
 
 Check for project-specific release note tooling, then either run it or fall back to manual collection.
 
@@ -66,8 +129,8 @@ Check for project-specific release note tooling, then either run it or fall back
 **If no tooling is found:** collect changelog entries manually from delivered plans:
 
 ```bash
-# Get the date of the last release tag
-LAST_TAG=$(git tag --sort=-v:refname | head -1)
+# Get the date of the last release tag (exclude RC tags)
+LAST_TAG=$(git tag --sort=-v:refname | grep -v '\-rc\.' | head -1)
 if [ -n "$LAST_TAG" ]; then
   LAST_RELEASE_DATE=$(git log -1 --format=%ai "$LAST_TAG" | cut -d' ' -f1)
 else
@@ -144,7 +207,11 @@ git push origin main
 git push origin v<version>
 ```
 
-### 6. Summary
+### 6. Clean Up RC Artifacts
+
+If RC tags exist for this version, they remain in git history (don't delete them — they're part of the release record). The checklist file at `docs/releases/v<version>-checklist.md` stays committed as documentation of what was verified.
+
+### 7. Summary
 
 Print:
 - Released: `v<version>`
@@ -153,4 +220,5 @@ Print:
 - Plans included:
   - `<slug>` — <type>
   - `<slug>` — <type>
+- RC iterations: <count> (if any)
 - Next steps: deploy, announce, etc. (project-specific)

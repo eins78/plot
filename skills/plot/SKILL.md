@@ -10,12 +10,12 @@ metadata:
   author: eins78
   repo: https://github.com/eins78/skills
   version: 1.0.0-beta.1
-compatibility: Designed for Claude Code and Cursor. Requires git and gh CLI.
+compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
 # Plot
 
-Lean, git-native planning system. Plans are markdown files on branches, PRs are workflow metadata, git is the source of truth. Plans merge to main before implementation begins; one plan can spawn multiple parallel implementation branches.
+Lean, git-native planning system. Plans are markdown files on branches, PRs are workflow metadata, git is the source of truth. Plans merge to main before implementation begins; one plan can spawn multiple parallel implementation branches. Works with any team composition — human, AI-assisted, or fully agentic.
 
 ## Setup
 
@@ -35,22 +35,27 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 flowchart LR
     subgraph Planning
         A["/plot-idea"] -->|draft PR| B["Refine &<br/>slice branches"]
-        B -->|gh pr ready| C["Review plan"]
+        B -->|"⏳ gh pr ready"| C["Review plan"]
     end
     subgraph Approval
-        C -->|"/plot-approve<br/>(or PR already merged)"| D["Plan merged<br/>impl PRs created"]
+        C -->|"⏳ /plot-approve<br/>(or PR already merged)"| D["Plan merged<br/>impl PRs created"]
     end
     subgraph Implementation
-        D --> E["Work on<br/>impl branches"]
-        E -->|"draft → review → merge<br/>(standard code review)"| F["All impls<br/>merged to main"]
+        D -->|"⚡ create branches"| E["Work on<br/>impl branches"]
+        E -->|"⏸ draft → review → merge<br/>(standard code review)"| F["All impls<br/>merged to main"]
     end
     subgraph Delivery
-        F -->|/plot-deliver| G["Plan archived"]
+        F -->|"⚡ /plot-deliver"| G["Plan archived"]
     end
     subgraph Release
-        G -->|"/plot-release<br/>(1..n delivered plans)"| H["Version bump<br/>changelog, tag"]
+        G -->|"⚡ /plot-release rc"| H["RC tag +<br/>checklist"]
+        H -->|"⏸ endgame testing"| I{"All verified?"}
+        I -->|"no: fix → new RC"| H
+        I -->|"⏳ sign-off"| J["⚡ /plot-release"]
     end
 ```
+
+Legend: ⚡ automate ASAP · ⏸ natural pause · ⏳ human-paced
 
 ### Docs / Infra (live when merged)
 
@@ -77,12 +82,14 @@ infra/<slug>    →  PR  →  merge
 
 ## Phases
 
-| Phase | Meaning | Trigger |
-|-------|---------|---------|
-| Draft | Plan being written/refined | `/plot-idea` |
-| Approved | Plan merged, impl branches created | `/plot-approve` |
-| Delivered | All impl PRs merged, plan archived | `/plot-deliver` |
-| Released | Included in a versioned release | `/plot-release` |
+| Phase | Meaning | Trigger | Transition Pacing |
+|-------|---------|---------|-------------------|
+| Draft | Plan being written/refined | `/plot-idea` | ⏸ natural pause (writing) |
+| Approved | Plan merged, impl branches created | `/plot-approve` | ⏳ human-paced (review) → ⚡ automate (branch creation) |
+| Delivered | All impl PRs merged, plan archived | `/plot-deliver` | ⏸ natural pause (implementation) → ⚡ automate (archive) |
+| Released | Included in a versioned release | `/plot-release` | ⚡ automate (RC tag) → ⏸ endgame → ⏳ sign-off → ⚡ automate (final tag) |
+
+The Release phase includes an RC verification loop. Individual plans don't track a "Testing" phase — the release checklist does. See the Pacing section in the manifesto for details.
 
 ## Conventions
 

@@ -25,7 +25,7 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 
 ## Core Design Principles
 
-1. **Commands not code** — Plot commands are Claude Code skill markdown (natural language instructions), not shell scripts. Claude interprets and adapts to edge cases rather than failing on unexpected state.
+1. **Commands not code** — Plot commands are Claude Code skill markdown (natural language instructions), not shell scripts. Claude interprets and adapts to edge cases rather than failing on unexpected state. *Note: this principle is under active discussion. Plot now includes shell helper scripts and plans to add workflow scripts. The relationship between skills (adaptive, AI-interpreted) and scripts (deterministic, human-executable) is being refined — see the editorial note in MANIFESTO.md.*
 
 2. **Plans merge before implementation** — The plan file lands on main first, so all implementation branches reference a stable document. This was the key design insight that solved the "can't merge until fully implemented" problem.
 
@@ -40,6 +40,16 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 7. **Smart defaults** — Commands discover context (open PRs, active plans) rather than demanding exact input. Missing arguments trigger helpful suggestions, not errors.
 
 8. **Phase guardrails** — Each command checks the current phase before acting. Cannot approve an unreviewed draft. Cannot deliver with open PRs. Cannot release undelivered work.
+
+## Roles
+
+Plot recognizes three roles in the development workflow:
+
+- **Decision maker** — Reviews plans, approves work, decides when to release, signs off on verification. **Always human.** Agents never make decisions — they surface information and suggest, humans decide.
+- **Process facilitator** — Reads git state, suggests next actions, provides summaries. This is the `/plot` dispatcher role. Can be a human running scripts or an AI interpreting skills.
+- **Implementer** — Writes code, creates PRs, does the actual work. Human developers, AI coding agents, or both.
+
+Facilitation and implementation can be human or AI. Decisions are always human.
 
 ## Testing
 
