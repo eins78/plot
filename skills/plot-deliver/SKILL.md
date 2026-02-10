@@ -16,7 +16,7 @@ compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses
 
 Verify all implementation is done, then deliver the plan. This workflow can be run manually (using git and forge CLI), by an AI agent interpreting this skill, or via a workflow script (once available).
 
-For docs/infra work, this is the end — live when merged. For features/bugs, `/plot-release` follows when you're ready to cut a versioned release.
+For docs/infra work, this is the end — live when merged. For features/bugs, `/plot-release` follows when the team is ready to cut a versioned release.
 
 **Input:** `$ARGUMENTS` is the `<slug>` of a plan on main.
 
