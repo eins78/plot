@@ -35,7 +35,7 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
 | Steps | Min. Tier | Notes |
 |-------|-----------|-------|
-| 1-3. Parse through Merge | Small | Git/gh commands, state checks |
+| 1-3. Parse through Merge | Small | Git/gh commands, helper script, state checks |
 | 4. Read and Parse Plan | Small | Structured markdown parsing |
 | 4b. Branch Conflicts | Mid | Cross-referencing multiple plan files |
 | 5-8. Create Branches through Summary | Small | Git/gh commands, templates |

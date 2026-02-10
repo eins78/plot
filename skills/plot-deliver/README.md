@@ -4,7 +4,7 @@ Verify all implementation is done, then deliver the plan.
 
 ## Purpose
 
-Spoke of the Plot workflow. Handles the delivery phase: verifies all implementation PRs are merged, performs a completeness check (plan deliverables vs actual PR diffs using parallel subagents), and delivers the plan (moves the symlink from `active/` to `delivered/`, updates the Phase field). Plan files never move — they stay at their date-prefixed path. For features/bugs, `/plot-release` follows; for docs/infra, delivery means the work is live.
+Spoke of the Plot workflow. Handles the delivery phase — verifies all implementation PRs are merged, performs a completeness check (plan deliverables vs actual PR diffs using parallel subagents), and delivers the plan (moves the symlink from `active/` to `delivered/`, updates the Phase field). Plan files never move — they stay at their date-prefixed path. For features/bugs, `/plot-release` follows; for docs/infra, delivery means the work is live.
 
 ## Tier
 

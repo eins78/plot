@@ -4,7 +4,7 @@ Merge an approved plan and fan out into implementation branches.
 
 ## Purpose
 
-Spoke of the Plot workflow. Handles the approval phase: merges the plan PR (landing `docs/plans/<slug>.md` on main), then creates implementation branches and draft PRs for each branch listed in the plan. Each implementation branch carries approval metadata (timestamp, approver) as its initial commit.
+Spoke of the Plot workflow. Handles the approval phase — merges the plan PR (landing `docs/plans/<slug>.md` on main), then creates implementation branches and draft PRs for each branch listed in the plan. Each implementation branch carries approval metadata (timestamp, approver) as its initial commit.
 
 ## Tier
 

@@ -1,6 +1,6 @@
 # Plot Manifesto
 
-Plot is a git-native planning system for software development. It is designed for teams where humans make decisions and AI agents help plan and implement, but requires nothing more than git, a forge with pull request review, and markdown. It is experimental, still taking shape through real-world usage, and currently in alpha.
+Plot is a git-native planning system for software development. It is designed for teams where humans make decisions and AI agents help plan and implement, but requires nothing more than git, a forge with pull request review, and markdown. It is experimental, evolving through real-world usage, and currently in alpha.
 
 ## Core Belief
 
@@ -14,13 +14,13 @@ These are the founding beliefs that guide Plot's design. When a proposed change 
 
 ### 1. Git is the database
 
-Plans are markdown files committed to git. Pull requests are workflow metadata. A project board (if used) is a read-only reflection of PR state — useful to glance at, but never the source of truth. There is no external tracker, no database, no API to sync with. If it's not in git, it doesn't exist.
+Plans are markdown files committed to git. Pull requests are workflow metadata. A project board (if used) is a read-only reflection of PR state — useful to glance at, but never the source of truth. No external tracker, database, or sync API. If it's not in git, it doesn't exist.
 
 This also makes plans transparent. Plans-as-files are more visible than backlog items in a tracker. Anyone with repo access can browse `docs/plans/active/` and `docs/plans/delivered/` without needing credentials for a separate tool. The full history of every plan — drafts, revisions, approvals — is in the git log.
 
 ### 2. Plans merge before implementation
 
-This is the key design insight that makes everything else work. The plan file lands on main *before* any implementation branch is created. Every implementation branch references a stable, approved document. Anyone with repo access can see what was promised and compare it to what was delivered.
+The key design insight: the plan file lands on main *before* any implementation branch is created. Every implementation branch references a stable, approved document. Anyone with repo access can see what was promised and compare it to what was delivered.
 
 ### 3. Commands, not code
 
@@ -106,7 +106,7 @@ Not every change needs a release note. The rule: **user-facing changes need rele
 
 Plot was built on 2026-02-07 across five Claude Code sessions, starting from a simple question: "I want to plan multiple ideas, read them as formatted text, and implement them in parallel." The design evolved through two complete end-to-end lifecycle tests that uncovered and fixed critical issues — empty branches on approve, undated archive names, draft PR merge failures, and stale local state in helper scripts.
 
-It is still experimental. The current version (1.0.0-beta) reflects what works in practice for a small team, but the system is actively evolving as it gets used in more projects. Conventions may change, new commands may appear, and some current behavior may be revised based on real-world feedback.
+Plot is experimental. The current version (1.0.0-beta) reflects what works for a small team, but conventions may change and behavior may be revised as more projects adopt it.
 
 ## Making Decisions
 

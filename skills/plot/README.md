@@ -8,16 +8,16 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 
 ## Structure
 
-| Path | Purpose | Size |
-|------|---------|------|
-| `plot/SKILL.md` | Hub: overview, lifecycle diagrams, setup, phases, conventions, guardrails, dispatcher | ~190 lines |
-| `plot-idea/SKILL.md` | Create plan: idea branch + plan file + draft PR (8 steps) | ~155 lines |
-| `plot-approve/SKILL.md` | Approve plan: merge PR, fan out impl branches/PRs (8 steps) | ~185 lines |
-| `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, deliver (8 steps) | ~155 lines |
-| `plot-release/SKILL.md` | Release: verify readiness, cross-check notes, guide release (6 steps) | ~165 lines |
-| `plot/scripts/plot-pr-state.sh` | Helper: query plan PR state (draft/ready/merged/closed) | 41 lines |
-| `plot/scripts/plot-impl-status.sh` | Helper: query all impl PR states for a slug from plan on main | 63 lines |
-| `plot/changelog.md` | Complete evolution history across 5 development sessions | ~200 lines |
+| Path | Purpose |
+|------|---------|
+| `plot/SKILL.md` | Hub: overview, lifecycle diagrams, setup, phases, conventions, guardrails, dispatcher |
+| `plot-idea/SKILL.md` | Create plan: idea branch + plan file + draft PR (8 steps) |
+| `plot-approve/SKILL.md` | Approve plan: merge PR, fan out impl branches/PRs (8 steps) |
+| `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, deliver (8 steps) |
+| `plot-release/SKILL.md` | Release: verify readiness, cross-check notes, guide release (6 steps) |
+| `plot/scripts/plot-pr-state.sh` | Helper: query plan PR state (draft/ready/merged/closed) |
+| `plot/scripts/plot-impl-status.sh` | Helper: query all impl PR states for a slug from plan on main |
+| `plot/changelog.md` | Complete evolution history across 5 development sessions |
 
 ## Tier
 
@@ -25,7 +25,7 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 
 ## Core Design Principles
 
-1. **Commands not code** — Plot commands are Claude Code skill markdown (natural language instructions), not shell scripts. Claude interprets and adapts to edge cases rather than failing on unexpected state. *Note: this principle is under active discussion. Plot now includes shell helper scripts and plans to add workflow scripts. The relationship between skills (adaptive, AI-interpreted) and scripts (deterministic, human-executable) is being refined — see the editorial note in MANIFESTO.md.*
+1. **Commands not code** — Plot's workflow commands are skill markdown that an AI agent interprets and adapts to edge cases. Separate helper scripts handle mechanical data gathering (structured output any model can parse). Skills interpret and adapt; scripts collect and report.
 
 2. **Plans merge before implementation** — The plan file lands on main first, so all implementation branches reference a stable document. This was the key design insight that solved the "can't merge until fully implemented" problem.
 
