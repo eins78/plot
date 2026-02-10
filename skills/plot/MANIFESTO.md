@@ -20,13 +20,11 @@ This also makes plans transparent. Plans-as-files are more visible than backlog 
 
 ### 2. Plans merge before implementation
 
-This is the key design insight that makes everything else work. The plan file lands on main *before* any implementation branch is created. Every implementation branch references a stable, approved document. This means you always know what was promised, and you can compare it to what was delivered.
+This is the key design insight that makes everything else work. The plan file lands on main *before* any implementation branch is created. Every implementation branch references a stable, approved document. Anyone with repo access can see what was promised and compare it to what was delivered.
 
 ### 3. Commands, not code
 
-Plot's commands are markdown instructions that an AI agent interprets — not shell scripts or compiled programs. This makes them resilient: when a PR is already merged, when arguments are missing, when local state is stale, the agent adapts rather than crashing. The trade-off is that behavior isn't perfectly deterministic, but in practice the flexibility matters more than the precision.
-
-> **Editorial note:** This principle is under active discussion. Plot now includes shell helper scripts (`scripts/plot-pr-state.sh`, `scripts/plot-impl-status.sh`) and plans to add workflow scripts that compose them. The relationship between skills (adaptive, AI-interpreted) and scripts (deterministic, human-executable) needs a clearer articulation. See the Pacing section below for how mechanical vs. judgment-requiring steps inform this split.
+Plot's workflow commands are markdown skill instructions that an AI agent interprets — not shell scripts or compiled programs. When a PR is already merged, arguments are missing, or local state is stale, the agent adapts rather than crashing. Behavior is not perfectly deterministic, but the flexibility matters more than the precision. Separate helper scripts (`scripts/plot-pr-state.sh`, `scripts/plot-impl-status.sh`) handle mechanical data gathering — structured output that any model tier can parse. The distinction: skills interpret and adapt; scripts collect and report.
 
 ### 4. One plan, many branches
 
@@ -42,7 +40,7 @@ Commands discover context rather than demanding exact arguments. If there's one 
 
 ### 7. Phase guardrails
 
-Each command checks the current workflow phase before acting. You cannot approve an unreviewed draft. You cannot deliver a plan with open implementation PRs. You cannot release undelivered work. These guardrails prevent common workflow mistakes at the point where they'd cause the most confusion.
+Each command checks the current workflow phase before acting. An unreviewed draft cannot be approved. A plan with open implementation PRs cannot be delivered. Undelivered work cannot be released. These guardrails prevent common workflow mistakes at the point where they'd cause the most confusion.
 
 ### 8. Plans stay in place
 
@@ -75,7 +73,7 @@ The release phase includes a verification loop. An RC (release candidate) tag is
 - **Endgame fixes:** normal branches, normal PRs, new RC. No special process.
 - **Sign-off:** humans give final OK on each checklist item. Agents can guide testing but never sign off.
 
-The `/plot` dispatcher reads your current git state and tells you what to do next.
+The `/plot` dispatcher reads the current git state and suggests the next action.
 
 ## Pacing
 
@@ -95,8 +93,8 @@ Plot is deliberately small and opinionated. These boundaries are intentional, no
 
 - **Not a monorepo tool.** Plot works with a single repository. Coordinating releases across multiple packages or repos is out of scope.
 - **Not a package publisher.** Plot handles versioning and changelogs, not npm publish or artifact distribution.
-- **Not an issue tracker.** It doesn't supplement issue trackers — it replaces them. If you need GitHub Issues alongside Plot, the two systems will overlap and conflict.
-- **Not a CI/CD system.** Plot creates tags and changelogs. What happens after that (deployment, notifications, artifact builds) is your CI/CD pipeline's job.
+- **Not an issue tracker.** It doesn't supplement issue trackers — it replaces them. Teams that use GitHub Issues alongside Plot will find the two systems overlap and conflict.
+- **Not a CI/CD system.** Plot creates tags and changelogs. What happens after that (deployment, notifications, artifact builds) is the project's CI/CD pipeline's job.
 - **Not a time or effort tracker.** No story points, no burndown charts, no estimates. Plot tracks *what* is planned and *whether* it shipped, not *how long* it took.
 - **Not a release note generator.** Plot discovers and uses whatever release note tooling the project already has (changesets, custom scripts, etc.). When no tooling exists, it constructs notes from plan changelog sections and commit messages. It doesn't auto-generate notes from commit history alone.
 
