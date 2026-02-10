@@ -22,6 +22,7 @@ Create a versioned release from delivered plans. This workflow can be run manual
 
 Examples: `/plot-release rc`, `/plot-release minor`, `/plot-release 1.2.0`
 
+<!-- keep in sync with plot/SKILL.md Setup -->
 ## Setup
 
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:

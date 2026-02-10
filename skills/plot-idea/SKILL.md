@@ -20,6 +20,7 @@ Create a plan for review: idea branch, plan file, and draft PR.
 
 Example: `/plot-idea sse-backpressure: Handle SSE client disconnects gracefully`
 
+<!-- keep in sync with plot/SKILL.md Setup -->
 ## Setup
 
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:

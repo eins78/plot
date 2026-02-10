@@ -20,6 +20,7 @@ Merge an approved plan and fan out into implementation branches. This workflow c
 
 Example: `/plot-approve sse-backpressure`
 
+<!-- keep in sync with plot/SKILL.md Setup -->
 ## Setup
 
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:

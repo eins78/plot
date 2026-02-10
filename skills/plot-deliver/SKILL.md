@@ -22,6 +22,7 @@ For docs/infra work, this is the end — live when merged. For features/bugs, `/
 
 Example: `/plot-deliver sse-backpressure`
 
+<!-- keep in sync with plot/SKILL.md Setup -->
 ## Setup
 
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
