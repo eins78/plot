@@ -125,19 +125,13 @@ Compare what the plan promised against what was actually delivered.
 
 For feature and bug plans, check whether release note entries exist:
 
-**Discover tooling** — check in this order, stop at the first match:
+**Discover release note tooling** — check in this order, stop at first match:
 
-```
-if .changeset/config.json exists:
-  → project uses @changesets/cli
-  → check if .changeset/*.md files (excluding README.md) exist on main
-elif CLAUDE.md or AGENTS.md contain release note instructions:
-  → follow those project-specific instructions
-elif package.json has release/version/changelog scripts:
-  → note the tool for the summary
-else:
-  → no tooling found, skip this step
-```
+1. **Changesets:** Does `.changeset/config.json` exist? If so, the project uses `@changesets/cli`. Check if `.changeset/*.md` files (excluding README.md) exist on main.
+2. **Project rules:** Read `CLAUDE.md` and `AGENTS.md` for release note instructions (e.g., custom scripts, specific commands).
+3. **Custom scripts:** Check `package.json` for release-related scripts (e.g., `release`, `version`, `changelog`).
+
+If no tooling is found, skip this step.
 
 If tooling was found but no release note entries exist for this plan's work, **warn** the user: "No release note entries found for this feature. Consider adding one before releasing."
 
