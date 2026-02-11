@@ -197,9 +197,20 @@ If no tooling is found, skip — the plan's `## Changelog` section will be used 
 
 ### 7. Update Plan File on Main
 
-After all branches are created, update the plan file on main (date-prefixed path) to link the implementation PRs.
+After all branches are created, update the plan file on main (date-prefixed path) to reflect the approval and link the implementation PRs.
 
-In the `## Branches` section, append ` → #<number>` to each branch line.
+1. Change `**Phase:** Draft` → `**Phase:** Approved`
+2. Insert an `## Approval` section immediately after the `## Status` block (same content as step 5):
+
+```markdown
+## Approval
+
+- **Approved:** <APPROVED_AT>
+- **Approved by:** <APPROVED_BY>
+- **Assignee:** <APPROVED_BY>
+```
+
+3. In the `## Branches` section, append ` → #<number>` to each branch line.
 
 Before:
 ```markdown
