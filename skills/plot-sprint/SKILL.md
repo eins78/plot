@@ -14,9 +14,7 @@ compatibility: Designed for Claude Code and Cursor. Requires git. Sprint files a
 
 # Plot: Sprint
 
-Manage time-boxed sprints with MoSCoW prioritization. Sprints group work by schedule, not scope. Sprint files live in `docs/sprints/`, committed directly to main — no PR, no review gate.
-
-Sprints are **not plans**. Plans track *what* to build; sprints track *when* to ship it. Principle 2 ("Plans merge before implementation") does not apply to sprints.
+Sprints are **not plans**. Plans track *what* to build; sprints track *when* to ship it. Sprint files live in `docs/sprints/`, committed directly to main — no PR, no review gate. Principle 2 ("Plans merge before implementation") does not apply to sprints.
 
 **Input:** `$ARGUMENTS` determines the subcommand.
 
@@ -54,8 +52,7 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 | Steps | Min. Tier | Notes |
 |-------|-----------|-------|
 | Create, commit, start, status | Small | Git commands, templates, file ops |
-| Close — MoSCoW completeness | Small | Checkbox parsing, plan ref lookup |
-| Close — cross-plan lookup | Mid | Reading multiple plan files to check delivery status of `[slug]` refs |
+| Close | Mid | Checkbox parsing + reading plan files to check delivery status of `[slug]` refs |
 
 All sprint operations are structural (Small or Mid). No Frontier needed.
 
@@ -149,11 +146,11 @@ Write `docs/sprints/${WEEK_PREFIX}-<slug>.md`:
 
 ### Should Have
 
-- [ ] ...
+<!-- add items here -->
 
 ### Could Have
 
-- [ ] ...
+<!-- add items here -->
 
 ### Deferred
 
@@ -161,7 +158,7 @@ Write `docs/sprints/${WEEK_PREFIX}-<slug>.md`:
 
 ## Retrospective
 
-<!-- Filled during /plot-sprint close -->
+<!-- Filled during /plot-sprint close: What went well / What could improve / Action items -->
 
 ## Notes
 
@@ -172,21 +169,31 @@ Item format: `- [ ] [slug] description` (plan reference) or `- [ ] description` 
 
 Leave Start/End dates as placeholders — the user fills them during the Planning phase.
 
-#### 6. Commit to Main
+#### 6. Update Plan Files
 
-Sprint files are committed directly to main:
+For each plan-backed item (`[slug]`) added in step 4, update the referenced plan file to record sprint membership:
+
+- Resolve the plan file via `docs/plans/active/<slug>.md`
+- Add `- **Sprint:** <sprint-slug>` to its `## Status` section (after the Phase line)
+
+This enables sprint awareness in `/plot-approve` and `/plot-deliver`.
+
+#### 7. Commit to Main
+
+Sprint files are committed directly to main (include any updated plan files):
 
 ```bash
-git add docs/sprints/${WEEK_PREFIX}-<slug>.md
+git add docs/sprints/${WEEK_PREFIX}-<slug>.md docs/plans/
 git commit -m "sprint: create <slug>"
 git push
 ```
 
-#### 7. Summary
+#### 8. Summary
 
 Print:
 - Created: `docs/sprints/${WEEK_PREFIX}-<slug>.md`
 - Phase: Planning
+- Plan files updated: N (if any)
 - Next: add items, set dates, then `/plot-sprint <slug> commit` when ready
 
 ---
@@ -301,8 +308,8 @@ Could Have:  0/1 complete
 ```
 
 If must-haves are incomplete, present three options:
-1. Close anyway (must-haves stay unchecked)
-2. Move incomplete must-haves to Deferred
+1. Close anyway (must-haves stay unchecked in place)
+2. Move incomplete must-haves to Deferred — move each unchecked `- [ ]` line from `### Must Have` to `### Deferred`, preserving the original text
 3. Hold off (don't close yet)
 
 #### 3. Capture Retrospective
@@ -314,7 +321,20 @@ If yes, prompt for:
 - What could improve?
 - Action items for next sprint?
 
-Fill the `## Retrospective` section.
+Fill the `## Retrospective` section using this structure:
+
+```markdown
+## Retrospective
+
+### What went well
+- <items>
+
+### What could improve
+- <items>
+
+### Action items
+- [ ] <items>
+```
 
 #### 4. Update Phase and Remove Symlink
 
