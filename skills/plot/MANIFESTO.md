@@ -87,6 +87,10 @@ Not every step in the workflow should move at the same speed. Plot recognizes th
 
 The meta-principle: **don't over-complicate because AI doesn't feel friction.** Every step must be executable by a human with basic git knowledge. If a workflow step can't be done by hand, it's too complex. Scripts and AI make it faster, not possible.
 
+## Sprints
+
+Sprints are an optional temporal lens over plans. A sprint groups work by schedule — start date, end date, MoSCoW priorities. Plans track *what* to build; sprints track *when* to ship it. Sprint files live in `docs/sprints/`, managed by `/plot-sprint`, committed directly to main. Sprints do not spawn implementation branches, so Principle 2 (plans merge before implementation) does not apply.
+
 ## What Plot Is Not
 
 Plot is deliberately small and opinionated. These boundaries are intentional, not oversights.
@@ -95,7 +99,7 @@ Plot is deliberately small and opinionated. These boundaries are intentional, no
 - **Not a package publisher.** Plot handles versioning and changelogs, not npm publish or artifact distribution.
 - **Not an issue tracker.** It doesn't supplement issue trackers — it replaces them. Teams that use GitHub Issues alongside Plot will find the two systems overlap and conflict.
 - **Not a CI/CD system.** Plot creates tags and changelogs. What happens after that (deployment, notifications, artifact builds) is the project's CI/CD pipeline's job.
-- **Not a time or effort tracker.** No story points, no burndown charts, no estimates. Plot tracks *what* is planned and *whether* it shipped, not *how long* it took.
+- **Not an effort tracker.** No story points, no burndown charts, no estimates. Sprints use deadlines as constraints, not time as a metric — Plot tracks *what* is planned and *whether* it shipped, not *how long* it took.
 - **Not a release note generator.** Plot discovers and uses whatever release note tooling the project already has (changesets, custom scripts, etc.). When no tooling exists, it constructs notes from plan changelog sections and commit messages. It doesn't auto-generate notes from commit history alone.
 
 ## Release Notes
@@ -119,5 +123,6 @@ When considering a change to Plot, ask:
 5. Would removing it make the system simpler without losing something essential?
 6. Could a human with basic git knowledge execute this manually?
 7. Could a smaller model (Sonnet/Haiku) follow these instructions for the mechanical parts?
+8. Does it stay focused on scheduling, or creep into effort tracking?
 
 If the answer to question 5 is yes, remove it. If the answer to question 6 is no, simplify it. Plot should stay lean. The goal is a small set of strong conventions, not a large set of flexible options.

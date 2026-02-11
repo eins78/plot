@@ -88,7 +88,7 @@ git checkout main
 git pull origin main
 ```
 
-Find the plan file: `ls docs/plans/active/<slug>.md` resolves to the date-prefixed file (e.g., `docs/plans/YYYY-MM-DD-<slug>.md`). Read it and parse the `## Branches` section. Expected format:
+Find the plan file: `ls docs/plans/active/<slug>.md` resolves to the date-prefixed file (e.g., `docs/plans/YYYY-MM-DD-<slug>.md`). Read it and parse the `## Branches` section. If the plan has a `Sprint: <name>` field in its Status section, note the sprint membership for the summary. Expected format:
 
 ```markdown
 - `type/name` — description
@@ -239,4 +239,5 @@ Print:
   - `type/name` → PR #<number> (URL)
   - `type/name` → PR #<number> (URL)
 - If release note tooling was found in step 6: "Remember to add release note entries on each implementation branch (e.g., `pnpm exec changeset`)."
+- If the plan has a Sprint field: "Part of sprint `<sprint-name>`."
 - Next step: check out a branch and start implementing

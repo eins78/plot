@@ -15,6 +15,7 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 | `plot-approve/SKILL.md` | Approve plan: merge PR, fan out impl branches/PRs (8 steps) |
 | `plot-deliver/SKILL.md` | Deliver: verify all impl PRs merged, completeness check, deliver (8 steps) |
 | `plot-release/SKILL.md` | Release: verify readiness, cross-check notes, guide release (6 steps) |
+| `plot-sprint/SKILL.md` | Sprint: time-boxed coordination with MoSCoW priorities (5 subcommands) |
 | `plot/scripts/plot-pr-state.sh` | Helper: query plan PR state (draft/ready/merged/closed) |
 | `plot/scripts/plot-impl-status.sh` | Helper: query all impl PR states for a slug from plan on main |
 | `plot/changelog.md` | Complete evolution history across 5 development sessions |
