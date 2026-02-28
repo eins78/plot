@@ -284,20 +284,7 @@ If yes, prompt for:
 - What could improve?
 - Action items for next sprint?
 
-Fill the `## Retrospective` section using this structure:
-
-```markdown
-## Retrospective
-
-### What went well
-- <items>
-
-### What could improve
-- <items>
-
-### Action items
-- [ ] <items>
-```
+Fill the `## Retrospective` section using the template from `skills/plot/templates/retrospective.md`. Include the Metrics subsection with actual counts from step 2.
 
 #### 4. Update Phase and Remove Symlink
 
