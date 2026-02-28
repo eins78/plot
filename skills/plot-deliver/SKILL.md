@@ -170,6 +170,8 @@ Print:
 - Index: moved from `active/` to `delivered/`
 - All implementation PRs: merged
 - If the plan has a Sprint field: show sprint progress ("N/M sprint items delivered")
+- Progress: `[ ] Draft > [ ] Approved > [x] Delivered > [ ] Released`
 - Type reminder:
   - If feature/bug: "Run `/plot-release` when ready to cut a versioned release."
   - If docs/infra: "Live on main — no release needed."
+- Tip: Run `/plot` to see overall status and what to do next

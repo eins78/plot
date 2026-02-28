@@ -127,7 +127,11 @@ git push
 - RC tag: `v<version>-rc.<n>`
 - Checklist: `docs/releases/v<version>-checklist.md`
 - Plans included: list of slugs
-- Next: test against checklist. If bugs found, fix via normal `bug/` branches, merge, then run `/plot-release rc` again for next RC. When all items pass, run `/plot-release` to cut the final release.
+- Progress: `[ ] Draft > [ ] Approved > [x] Delivered > [*] Released (RC)`
+- Suggested next actions:
+  1. Test against the checklist items
+  2. If bugs found: fix via `bug/` branches, merge, then `/plot-release rc` for next RC
+  3. When all items pass: `/plot-release` to cut the final release
 
 ### 2B. Final Release Path — Generate Release Notes
 
@@ -207,4 +211,9 @@ Print:
   - `<slug>` — <type>
 - Cross-check result: complete / gaps found
 - RC iterations: <count> (if any)
+- Progress: `[ ] Draft > [ ] Approved > [ ] Delivered > [x] Released`
 - Status: what remains to be done (version bump, tag, push, etc.)
+- Suggested next actions:
+  1. If version bump/tag/push still needed: follow the steps from step 4
+  2. Run `/plot` to verify clean state
+  3. Start next cycle: `/plot-idea` or `/plot-sprint`

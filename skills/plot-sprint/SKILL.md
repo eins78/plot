@@ -25,6 +25,7 @@ Sprints are **not plans**. Plans track *what* to build; sprints track *when* to 
 | `/plot-sprint <slug> commit` | Lock sprint contents |
 | `/plot-sprint <slug> start` | Begin the sprint |
 | `/plot-sprint <slug> close` | End timebox, capture retro |
+| `/plot-sprint <slug> add/remove/reprio` | Change sprint scope (see Scope Change) |
 | `/plot-sprint <slug>: <goal>` | Create slug with goal |
 
 **Argument parsing:** `$ARGUMENTS` = `[<slug>] [<subcommand>] [<args>]`
@@ -162,6 +163,10 @@ Write `docs/sprints/${WEEK_PREFIX}-<slug>.md`:
 
 ## Notes
 
+### Scope Changes
+
+<!-- Log scope changes here: added/removed items, tier changes, with date and reason -->
+
 <!-- Session log, decisions, links -->
 ```
 
@@ -192,7 +197,7 @@ git push
 
 Print:
 - Created: `docs/sprints/${WEEK_PREFIX}-<slug>.md`
-- Phase: Planning
+- Sprint: `[*] Planning > [ ] Committed > [ ] Active > [ ] Closed`
 - Plan files updated: N (if any)
 - Next: add items, set dates, then `/plot-sprint <slug> commit` when ready
 
@@ -237,6 +242,7 @@ git push
 
 Print:
 - Committed: `<slug>`
+- Sprint: `[ ] Planning > [x] Committed > [ ] Active > [ ] Closed`
 - End date: `<end date>`
 - Items: N must-haves, N should-haves, N could-haves
 - Next: `/plot-sprint <slug> start` when the sprint begins
@@ -276,6 +282,7 @@ git push
 
 Print:
 - Started: `<slug>`
+- Sprint: `[ ] Planning > [ ] Committed > [x] Active > [ ] Closed`
 - End date: `<end date>`
 - Active symlink: `docs/sprints/active/<slug>.md`
 - Next: work on sprint items. When timebox ends, `/plot-sprint <slug> close`
@@ -351,9 +358,35 @@ git push
 
 Print:
 - Closed: `<slug>`
+- Sprint: `[ ] Planning > [ ] Committed > [ ] Active > [x] Closed`
 - Must-haves: N/M complete
 - Deferred: N items (if any moved)
 - Retrospective: captured / skipped
+- Suggested next actions:
+  1. Review the retrospective action items
+  2. Carry deferred items to the next sprint: `/plot-sprint <new-slug>: <goal>`
+  3. If all planned work is delivered: `/plot-release` to cut a release
+
+---
+
+### Scope Change
+
+Scope changes are allowed during Active (or Committed) sprints. All changes are logged in the sprint file's `## Notes > ### Scope Changes` section for traceability.
+
+**Adding items mid-sprint:**
+- Add the new `- [ ]` item to the appropriate MoSCoW tier
+- Log: `- YYYY-MM-DD: Added [slug] to Must/Should/Could — <reason>`
+- If plan-backed (`[slug]`), update the plan's Sprint field
+
+**Removing or deferring items:**
+- Move the item to the `### Deferred` section (do not delete — preserve history)
+- Log: `- YYYY-MM-DD: Deferred [slug] from Must — <reason>`
+
+**Changing MoSCoW tier:**
+- Move the item between tier sections (e.g., Must → Should)
+- Log: `- YYYY-MM-DD: Reprioritized [slug] Must → Should — <reason>`
+
+Commit scope changes directly to main with message: `sprint: scope change <slug>`.
 
 ---
 
@@ -387,5 +420,5 @@ Read the sprint file and display:
 ```
 ## Active Sprints
 
-- `<slug>` — "<goal>" | 3 days remaining | Must: 2/4 | Should: 1/2 | Could: 0/1
+- `<slug>` — "<goal>" | [*] Active | 3 days remaining | Must: 2/4 | Should: 1/2 | Could: 0/1
 ```

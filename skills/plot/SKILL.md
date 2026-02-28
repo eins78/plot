@@ -148,6 +148,34 @@ The Release phase includes an RC verification loop. Individual plans don't track
 - `/plot` detects orphan impl branches (no approved plan) — prevents coding without context
 - Phase field in plan files is machine-readable — every command checks current phase before acting
 
+## Flexibility
+
+Natural language overrides are expected and should be honored. Users may say:
+
+- **Batch:** "Approve and deliver in one go" — run `/plot-approve` then `/plot-deliver` sequentially
+- **Skip:** "Skip the PR, just merge" — bypass draft PR if the user has context
+- **Branch override:** "Use `feature/my-name` instead" — accept non-standard branch names
+- **Combine:** "Create the plan and add it to the sprint" — chain `/plot-idea` + `/plot-sprint`
+- **Abbreviate:** "Deliver everything" — iterate over all active plans
+
+**Relationship:** Guardrails protect (prevent data loss, enforce phase ordering). Flexibility serves (reduce ceremony when the user knows what they want). If an override would violate a guardrail, confirm with the user before proceeding.
+
+## What Goes Where
+
+| Concern | Reusable Skill (SKILL.md) | Project CLAUDE.md |
+|---------|--------------------------|-------------------|
+| Workflow steps & lifecycle | Yes | No |
+| Branch naming conventions | Yes (defaults) | Override if different |
+| Directory paths | No | Yes (`docs/plans/`, etc.) |
+| Project board name | No | Yes |
+| Merge strategy preference | No | Yes |
+| Release note tooling | No | Yes (or auto-detected) |
+| Sprint cadence / dates | No | Yes (or in sprint file) |
+
+**Rule of thumb:** If it changes per project, it belongs in CLAUDE.md. If it's the same everywhere, it belongs in the skill.
+
+See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
+
 ## Dispatcher
 
 The `/plot` command analyzes current git state and suggests the next action.

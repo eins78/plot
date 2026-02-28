@@ -184,7 +184,9 @@ Print:
 - Plan file: `docs/plans/<CREATE_DATE>-<slug>.md`
 - Active index: `docs/plans/active/<slug>.md` (symlink)
 - PR URL (draft)
-- Next steps:
-  1. Refine the plan (especially the **Branches** section)
+- Progress: `[x] Draft > [ ] Approved > [ ] Delivered > [ ] Released`
+- Suggested next actions:
+  1. Refine the plan (especially **Branches** and **Design** sections)
   2. When ready for review: `gh pr ready <number>`
   3. After review: `/plot-approve <slug>`
+  - _Alternative:_ add to a sprint with `/plot-sprint <sprint> ` then add `[<slug>]` as an item

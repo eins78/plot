@@ -240,4 +240,8 @@ Print:
   - `type/name` → PR #<number> (URL)
 - If release note tooling was found in step 6: "Remember to add release note entries on each implementation branch (e.g., `pnpm exec changeset`)."
 - If the plan has a Sprint field: "Part of sprint `<sprint-name>`."
-- Next step: check out a branch and start implementing
+- Progress: `[ ] Draft > [x] Approved > [ ] Delivered > [ ] Released`
+- Suggested next actions:
+  1. Check out a branch and start implementing: `git checkout <type>/<name>`
+  2. When implementation is done: `/plot-deliver <slug>`
+  - _Alternative:_ work on multiple branches in parallel using worktrees
