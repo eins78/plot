@@ -128,6 +128,24 @@ Write `docs/sprints/${WEEK_PREFIX}-<slug>.md` using the template from `skills/pl
 
 Item format: `- [ ] [slug] description` (plan reference) or `- [ ] description` (lightweight task).
 
+#### Item Annotations
+
+Plan-backed items carry HTML comment annotations for automation tracking:
+
+```markdown
+- [ ] [slug] description <!-- pr: #N, status: draft, branch: feature/slug -->
+```
+
+| Field | Set by | Values |
+|-------|--------|--------|
+| `pr` | `/plot-approve` | PR number (`#N`) or `none` |
+| `status` | `/plot-approve`, `/plot-deliver` | `not-started`, `draft`, `open`, `merged` |
+| `branch` | `/plot-approve` | Implementation branch name |
+| `reviewed_at` | Review tracking | ISO 8601 timestamp |
+| `review_sha` | Review tracking | HEAD SHA at time of review |
+
+Annotations are created by `/plot-approve` and updated by `/plot-deliver`. The status subcommand reads them for enriched output.
+
 Leave Start/End dates as placeholders — the user fills them during the Planning phase.
 
 #### 6. Update Plan Files
@@ -357,6 +375,7 @@ Read the sprint file and display:
 - Phase
 - Time remaining (days until end date; "ended N days ago" if past)
 - MoSCoW progress: Must N/M, Should N/M, Could N/M
+- For plan-backed items with annotations: show PR number, status, and branch
 
 #### 3. Summary
 

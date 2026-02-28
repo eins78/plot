@@ -235,9 +235,17 @@ After:
 - `bug/sse-memory-leak` — Fix connection leak → #13
 ```
 
+4. **Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file and add an annotation comment:
+
+```markdown
+- [ ] [slug] description <!-- pr: #<number>, status: draft, branch: <type>/<name> -->
+```
+
+If the plan spawns multiple branches, annotate the item with the first (primary) PR.
+
 ```bash
 git checkout main
-git add docs/plans/YYYY-MM-DD-<slug>.md
+git add docs/plans/YYYY-MM-DD-<slug>.md docs/sprints/
 git commit -m "plot: link implementation PRs for <slug>"
 git push
 ```
