@@ -114,7 +114,12 @@ a reasonable number of times before giving up.
 When done, write a one-paragraph summary of what you accomplished, then
 output exactly one of these promise signals on its own line:
   <promise>COMPLETE</promise> — all sprint tasks done, all PRs green and clean
-  <promise>BLOCKED</promise> — cannot make further progress (blocked tasks, needs human review, etc.)
+  <promise>BLOCKED</promise> — truly stuck: external dependency, needs human action you cannot take
+
+Do NOT output BLOCKED just because you posted review comments — fixing those
+is the next iteration's job. Only output a signal when the sprint is COMPLETE
+or genuinely BLOCKED. If you did useful work and there is more to do, end
+your summary without any promise signal.
 PROMPT
 PROMPT="${PROMPT//\$SLUG/$SLUG}"
 
