@@ -146,6 +146,17 @@ Plan-backed items carry HTML comment annotations for automation tracking:
 
 Annotations are created by `/plot-approve` and updated by `/plot-deliver`. The status subcommand reads them for enriched output.
 
+#### Review Tracking
+
+The `review_sha` annotation enables skip-if-unchanged review:
+
+1. Compare current HEAD SHA of the PR branch to the `review_sha` in the annotation
+2. If same → no new commits since last review, skip
+3. If different → new commits, needs re-review
+4. If status is `merged` → never needs review
+
+Use `skills/plot/scripts/plot-review-status.sh <sprint-slug>` to get review freshness for all sprint items as JSON.
+
 Leave Start/End dates as placeholders — the user fills them during the Planning phase.
 
 #### 6. Update Plan Files
