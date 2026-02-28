@@ -176,6 +176,74 @@ Natural language overrides are expected and should be honored. Users may say:
 
 See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
 
+## Troubleshooting
+
+### Plan PR has merge conflicts
+
+The `idea/<slug>` branch has diverged from main.
+
+```bash
+git checkout idea/<slug>
+git fetch origin main
+git rebase origin/main
+# Resolve conflicts
+git push --force-with-lease
+```
+
+Then retry `/plot-approve <slug>`.
+
+### Implementation PR fails CI
+
+1. Check CI logs: `gh pr checks <number>`
+2. Fix on the implementation branch, push
+3. Wait for CI to pass, then merge normally
+
+If CI is flaky or irrelevant to this PR, the human decides whether to merge anyway.
+
+### Delivery check finds incomplete work
+
+`/plot-deliver` reports partial/missing deliverables. Options:
+
+1. **Hold off** — go finish the work, then re-run `/plot-deliver`
+2. **Deliver anyway** — accept the gap (the skill asks for confirmation)
+3. **Update the plan** — if scope changed, edit the plan file on main to match what was actually built, then re-run `/plot-deliver`
+
+### Plan file Phase is out of sync
+
+If the Phase field doesn't match reality (e.g., plan says "Draft" but PR is merged):
+
+```bash
+git checkout main && git pull
+# Fix the Phase field in docs/plans/YYYY-MM-DD-<slug>.md
+git add docs/plans/YYYY-MM-DD-<slug>.md
+git commit -m "plot: fix phase for <slug>"
+git push
+```
+
+### Orphan implementation branch
+
+`/plot` warns about impl branches with no approved plan. Options:
+
+1. **Create the plan retroactively** — `/plot-idea <slug>: <title>`, approve it
+2. **Just merge it** — if the work is small, skip the plan and merge directly
+3. **Delete the branch** — if the work is abandoned
+
+### Release check finds missing release notes
+
+`/plot-release` cross-check reports gaps. Options:
+
+1. **Add the missing entries** — update CHANGELOG.md or add changeset files
+2. **Proceed anyway** — if the gap is intentional (internal change, no user impact)
+3. **Go back to deliver** — if a plan was missed entirely
+
+### Sprint past end date with incomplete must-haves
+
+`/plot-sprint close` shows incomplete must-haves. Options:
+
+1. **Close anyway** — must-haves stay unchecked in place as a record
+2. **Move to Deferred** — explicitly acknowledge they didn't make the timebox
+3. **Extend the sprint** — edit the End date (but consider: is this hiding a scope problem?)
+
 ## Dispatcher
 
 The `/plot` command analyzes current git state and suggests the next action.
