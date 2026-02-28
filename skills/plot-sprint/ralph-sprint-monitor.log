@@ -1,0 +1,58 @@
+# ralph-sprint monitor log — 2026-02-28
+
+## Run: `ralph-sprint.sh 100 steal-features` on qubert project
+
+Script version: post-REVIEW-removal, COMPLETE/BLOCKED only, rebase step, RALPH_SPRINT_CLAUDE env var.
+
+## Iteration log
+
+| Iter | Elapsed | Work done | Signal | Notes |
+|------|---------|-----------|--------|-------|
+| 1 | ~10min | Fixed 6 review comments on PR #35 (file uploads), 50 tests pass | None | Rebase step worked. "No signal" fix correct — agent continued instead of false BLOCKED. |
+| 2 | ~10min | Self-reviewed PR #36 (rate limits), posted 7 findings | None | |
+| 3 | ~10min | Fixed 7 comments on PR #36, self-reviewed PR #37 (seatbelt), posted 7 findings | None | Efficient — fix + review in one iteration |
+| 4 | ~10min | Fixed 7 comments on PR #37 (seatbelt sandbox), 30 tests pass | None | |
+| 5 | ~10min | Resolved 27 threads on PRs #34-37, self-reviewed PRs #38, #39, #40 (all 3 in one go) | None | Very productive iteration |
+| 6 | ~10min | Rebased, re-reviewed PR #38 (worktree-isolation), posted 5 findings | None | **Concern:** PR #38 is plan-only (no code), agent keeps finding doc issues. Also re-reviewed a PR already reviewed in iter 5. |
+| 7 | ~10min | Fixed 3 comments on PR #38 (worktree-isolation plan), pushed dab9b71 | None | Re-review concern resolved — agent fixed comments and moved on, didn't re-review. |
+| 8 | ~10min | Self-reviewed PR #40 (channel-pairing): 10 inline findings + 6 test gaps. PRs #33-38 all clean. | None | Thorough review using 4 specialized agents. PR #39 still unreviewed. |
+| 9 | ~10min | Fixed all 10 review comments on PR #40 (channel-pairing), commit 75fc34d, 33 tests pass | None | |
+| 10 | ~10min | Resolved 10 threads on PR #40, discovered PR #38 still had 3 unresolved threads | None | Light iteration — just thread resolution. Agent starting to think about merging. |
+| 11 | ~10min | Resolved 3 stale threads on PR #38, self-reviewed PR #39 (browser-automation): 4 findings posted | None | Last PR reviewed. All 8 PRs now reviewed and CI green. |
+| 12 | ~10min | Fixed 4 comments on PR #39, self-reviewed again, posted 3 more findings | None | Fix-then-review in same iteration (like iter 3) |
+| 13 | ~10min | Fixed 7 remaining comments on PR #39. All 8 PRs green, 0 unresolved comments. | **COMPLETE** | Sprint complete! All 63 review comments across 8 PRs addressed. |
+| wrap | ~3min | Read all 13 transcripts, updated sessionlog, committed & pushed | — | Committed `155444f` to qubert main |
+
+## Script improvements made during session
+
+1. **Restored `<promise>` tags** — critical fix, bare grep false-positived on echoed prompt text
+2. **EXIT trap** instead of INT/TERM — catches set -e failures
+3. **Removed REVIEW signal** — simplified to COMPLETE/BLOCKED, "no signal" = continue
+4. **Clarified BLOCKED semantics** — "truly stuck" only, not "I posted review comments"
+5. **Added rebase step (step 0)** — worktree was stale, missing merged SDK upgrade
+6. **Renamed CLAUDE_CMD → RALPH_SPRINT_CLAUDE** — clearer naming
+7. **origin/HEAD instead of origin/main** — works regardless of default branch name
+
+## Observations / potential issues
+
+- **Re-review loop risk (RESOLVED):** Iteration 6 re-reviewed PR #38 (already reviewed in iter 5), but iter 7 just fixed the comments and moved on. The loop is converging — agent fixes comments then proceeds to next PR, not endlessly re-reviewing.
+- **Plan-only PRs:** PR #38 (worktree-isolation) has no implementation code, just a plan doc. Agent keeps finding documentation issues. This may never reach "clean" state since there's always something to critique in prose.
+- **Signal working correctly:** "No signal → continue" is working as designed. All 6 completed iterations used this path correctly.
+- **Ctrl+C propagation:** Still doesn't work when claude is inside command substitution `$()`. Had to `kill <pid>` directly. Known issue, not fixable without changing the buffering approach.
+- **Wrap-up session:** Takes ~3 minutes, writes sessionlog correctly. Used 3 parallel agents to read 13 transcripts.
+- **Convergence confirmed:** The fix→review→fix cycle converges. Even when the agent finds new issues during self-review (iter 12 found 3 more after fixing 4), the total count decreases each round until clean.
+- **Total throughput:** 13 iterations × ~10min = ~130min of autonomous work. 8 PRs fully reviewed and cleaned. 63 total review comments addressed.
+- **COMPLETE signal correct:** Agent correctly identified the end state (all PRs green, 0 unresolved comments) and output COMPLETE.
+- **Script behaved perfectly:** No false signals, no premature exits, clean wrap-up with sessionlog.
+
+## Commits in skills repo
+
+- `27f86f2` plot-sprint: add ralph-sprint automation script with bug fixes
+- `f26d607` plot-sprint: clarify signal semantics — no signal means keep going
+
+## Files
+
+- `skills/plot-sprint/ralph-sprint.sh` — the script
+- `skills/plot-sprint/install.sh` — symlink installer
+- `skills/plot-sprint/README.md` — dev notes
+- `~/OPS/home-workspace/sessionlogs/2026-02-28-ralph-sprint-import.md` — sessionlog
