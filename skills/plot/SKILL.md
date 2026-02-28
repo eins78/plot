@@ -244,6 +244,52 @@ git push
 2. **Move to Deferred** — explicitly acknowledge they didn't make the timebox
 3. **Extend the sprint** — edit the End date (but consider: is this hiding a scope problem?)
 
+## Automation Output
+
+When the conversation context indicates automation, append a fenced JSON block after the normal human-readable summary. Normal output is always produced first — JSON is appended, never replaces.
+
+### Detection
+
+Automation mode is active when any of these are true:
+- Words like "automation", "machine-readable", "ralph" appear in conversation context
+- `Output format: json` is set in the project's `## Plot Config`
+
+### Schema
+
+Each spoke skill appends a `json plot-output` fenced block:
+
+```json
+{
+  "command": "/plot-deliver",
+  "slug": "sse-backpressure",
+  "phase": "Delivered",
+  "status": "delivered",
+  "prs": [{"number": 12, "state": "MERGED"}, {"number": 13, "state": "MERGED"}],
+  "sprint": "week-1",
+  "next_action": "/plot-release",
+  "message": "All implementation PRs merged. Plan delivered."
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `command` | string | Which skill produced this output |
+| `slug` | string | The plan or sprint slug |
+| `phase` | string | Current phase after this action |
+| `status` | string | Result: "created", "approved", "delivered", "released", "error" |
+| `prs` | array? | PR numbers and states |
+| `sprint` | string? | Sprint slug if plan is in a sprint |
+| `next_action` | string | Suggested next command |
+| `message` | string | Human-readable one-line summary |
+
+### Progress Object (optional)
+
+For plan lifecycle commands, include a `progress` field:
+
+```json
+"progress": {"draft": true, "approved": true, "delivered": true, "released": false}
+```
+
 ## Dispatcher
 
 The `/plot` command analyzes current git state and suggests the next action.
