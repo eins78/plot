@@ -124,51 +124,7 @@ If plans exist, present: "Found N active plans. Add any to this sprint?" List th
 mkdir -p docs/sprints
 ```
 
-Write `docs/sprints/${WEEK_PREFIX}-<slug>.md`:
-
-```markdown
-# Sprint: <title derived from goal>
-
-> <goal>
-
-## Status
-
-- **Phase:** Planning
-- **Start:** YYYY-MM-DD
-- **End:** YYYY-MM-DD
-
-## Sprint Goal
-
-<goal expanded if needed>
-
-### Must Have
-
-- [ ] <items from user selection or empty>
-
-### Should Have
-
-<!-- add items here -->
-
-### Could Have
-
-<!-- add items here -->
-
-### Deferred
-
-<!-- Items moved here during sprint when they won't make the timebox -->
-
-## Retrospective
-
-<!-- Filled during /plot-sprint close: What went well / What could improve / Action items -->
-
-## Notes
-
-### Scope Changes
-
-<!-- Log scope changes here: added/removed items, tier changes, with date and reason -->
-
-<!-- Session log, decisions, links -->
-```
+Write `docs/sprints/${WEEK_PREFIX}-<slug>.md` using the template from `skills/plot/templates/sprint.md`, substituting `<title>` and `<sprint goal>`.
 
 Item format: `- [ ] [slug] description` (plan reference) or `- [ ] description` (lightweight task).
 
