@@ -55,6 +55,19 @@ Extract `slug` and `title` from `$ARGUMENTS`:
 - If no `:` found, treat the entire input as the slug and ask for a title
 - Slug must match `[a-z0-9-]+` (lowercase letters, digits, hyphens only). If it doesn't, ask the user to fix it rather than silently normalizing
 
+### Batch Mode
+
+If the user provides multiple slugs (comma-separated or as a list), or asks to create multiple plans "in batch" or "together":
+
+1. Parse each `<slug>: <title>` pair
+2. Create a single branch: `idea/batch-<first-slug>` (or a name the user provides)
+3. Create all plan files on that branch, each with its own file and active symlink
+4. Create a single PR titled "Plan: <title1>, <title2>, ..."
+
+The plans are still independent after approval — `/plot-approve` processes each slug separately.
+
+**Detection:** Multiple `:` entries in `$ARGUMENTS`, words like "batch"/"together"/"all at once" in conversation context, or an explicit list of slugs.
+
 ### 2. Pre-flight Checks
 
 - Warn if working tree has uncommitted changes (offer to stash)

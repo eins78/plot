@@ -53,6 +53,17 @@ If `$ARGUMENTS` is empty or missing:
 
 Extract `slug` from `$ARGUMENTS` (trimmed, lowercase, hyphens only).
 
+### Batch Mode
+
+If the user asks to approve multiple plans at once ("approve all", or lists multiple slugs):
+
+1. Verify all plan PRs are non-draft or already merged
+2. Merge each plan PR sequentially (step 3)
+3. Create all implementation branches (steps 4-5)
+4. Print a combined summary
+
+This works naturally — loop the single-plan flow for each slug. No special syntax needed.
+
 ### 2. Determine Plan PR State
 
 Run the helper to get plan PR state:
