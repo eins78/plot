@@ -53,13 +53,21 @@ Designed as part of the sprint support plan (`docs/plans/2026-02-11-plot-sprint-
 
 ## ralph-sprint.sh
 
-Automated sprint runner. Loops `claude -p` iterations against an active sprint, each iteration following a strict 3-phase workflow:
+Automated sprint runner. Loops `claude -p` iterations against an active sprint, each iteration following a strict 5-phase workflow:
 
+0. **Rebase** — `git fetch origin && git rebase origin/HEAD` (abort and BLOCKED on conflicts)
 1. **Fix first** — check open PRs for CI failures and unresolved review comments, fix them
-2. **Build second** — pick the next highest-priority unblocked task, implement it, create a PR
-3. **Review third** — self-review with `/pr-review-toolkit:review-pr`, post findings as PR comments (deliberately NOT fixing them in the same iteration)
+2. **Finalize** — mark reviewed PRs ready (`gh pr ready`), optionally merge (`gh pr merge --squash`)
+3. **Build** — pick the next highest-priority unblocked task, plan-aware (checks plan phase, uses `/plot-idea` for new plans), implement it, create a PR
+4. **Review** — self-review with `/pr-review-toolkit:review-pr`, post findings as PR comments (deliberately NOT fixing them in the same iteration)
 
 The separation of review from fix forces the agent to commit its critique as real PR comments before addressing them — preventing softening of its own review.
+
+Key prompt rules:
+- **Plan-awareness:** Tasks referencing unapproved plans trigger `/plot-approve` or BLOCKED. Substantial new tasks get `/plot-idea` first. Never `feature/*` branches for plan-only changes.
+- **"Reviewed" definition:** A PR with ANY prior review comments (even if resolved) counts as reviewed. Only re-review if new commits exist since last review.
+- **Plan-only PRs:** Single light review for factual errors only — no iterating on prose quality.
+- **Single task:** Means step 3 only. Steps 0-2 and 4 apply to all relevant PRs each iteration.
 
 ### Promise signals
 
@@ -67,8 +75,8 @@ Each iteration ends with one of two `<promise>` signals:
 
 | Signal | Meaning | Loop behavior |
 |--------|---------|---------------|
-| `<promise>COMPLETE</promise>` | All tasks done, all PRs green and clean | Exit, notify |
-| `<promise>BLOCKED</promise>` | Cannot make further progress (blocked tasks, needs human review, etc.) | Exit, notify |
+| `<promise>COMPLETE</promise>` | All tasks done, all PRs finalized (merged or ready depending on `RALPH_SPRINT_AUTOMERGE`) | Exit, notify |
+| `<promise>BLOCKED</promise>` | Cannot make further progress (blocked tasks, rebase conflicts, needs human action) | Exit, notify |
 
 If the agent doesn't output a signal, the loop continues to the next iteration. The `<promise>` XML tags prevent false-positive detection — bare keywords like `COMPLETE` can appear in agent analysis text, but the tag format won't.
 
@@ -79,6 +87,8 @@ Earlier versions had a third `REVIEW` signal that continued the loop when PRs ne
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `RALPH_SPRINT_CLAUDE` | No | `claude --dangerously-skip-permissions` | Claude command to run |
+| `RALPH_SPRINT_AUTOMERGE` | No | `false` | Auto-merge reviewed PRs (`true`/`false`) |
+| `RALPH_SPRINT_TIMEOUT` | No | `1800` | Per-iteration timeout in seconds (30 min) |
 | `CLAUDE_NTFY_URL` | Yes | — | ntfy server URL |
 | `CLAUDE_NTFY_TOKEN` | Yes | — | ntfy bearer token |
 | `CLAUDE_NTFY_TOPIC` | No | `claude-on-$(hostname -s)` | ntfy topic |
@@ -96,6 +106,12 @@ Or manually: `ln -sf $(pwd)/ralph-sprint.sh ~/bin/ralph-sprint.sh`
 ```bash
 ralph-sprint.sh <iterations> <slug>
 # Example: ralph-sprint.sh 100 steal-features
+
+# Auto-merge reviewed PRs:
+RALPH_SPRINT_AUTOMERGE=true ralph-sprint.sh 100 steal-features
+
+# Mid-run steering (inject instructions into next iteration):
+echo "Skip PR #38, it is plan-only" > .ralph-state/instructions.md
 ```
 
 ### Design decisions
@@ -104,6 +120,10 @@ ralph-sprint.sh <iterations> <slug>
 - **EXIT trap instead of INT/TERM** — Earlier versions used `trap cleanup INT TERM`, which missed `set -e` failures (no wrapup, no notification). EXIT trap catches all exits.
 - **`--worktree` per sprint** — Each iteration runs in `sprint-$SLUG` worktree for isolation from main.
 - **Wrap-up via `/bye`** — On exit, collects all session IDs and runs a final session that resumes each transcript to create a combined sessionlog.
+- **Configurable auto-merge** — Default `false` leaves PRs ready for human review. Set `true` for fully autonomous execution. Learned from the steal-features sprint where all 8 PRs ended up as unmerged drafts despite COMPLETE signal.
+- **Plan-awareness** — The prompt distinguishes plan-backed tasks from direct work, preventing orphan `feature/*` branches for plan-only changes (as happened with PR #38 in the steal-features sprint).
+- **Mid-run instruction injection** — Write to `.ralph-state/instructions.md` to steer the next iteration without killing the loop. The file is consumed and deleted after injection.
+- **Per-iteration timeout** — Prevents hung `claude` processes from blocking the sprint indefinitely. On timeout, the iteration result is empty, no signal detected, loop continues.
 
 ### Bug fixes applied during import
 
@@ -121,11 +141,27 @@ ralph-sprint.sh <iterations> <slug>
 
 Developed in `~/OPS/home-workspace/scripts/` over 14 commits (1faa701..9e0d007). Live-tested against the qubert project — iteration 1 implemented a seatbelt sandbox feature, created PR #37, and sent an ntfy notification.
 
+### Prompt improvements after steal-features sprint retro
+
+| Change | Motivation |
+|--------|-----------|
+| Added FINALIZE step (step 2) | 8 PRs ended as unmerged drafts despite COMPLETE — prompt never said to merge |
+| Configurable auto-merge via `RALPH_SPRINT_AUTOMERGE` | Default: ready-but-don't-merge. Human can opt into full autonomy |
+| Plan-aware task picking (step 3) | PR #38 was a plan doc on a `feature/*` branch — violates Plot conventions |
+| Ban on `feature/*` for plan-only changes | Plans belong on main via `/plot-idea`, not feature branches |
+| Precise "reviewed" definition (step 4) | Iteration 6 re-reviewed PR #38 already reviewed in iteration 5 |
+| Plan-only PR lighter review | 3 iterations wasted on prose quality reviews of plan doc |
+| Rebase conflict → BLOCKED | No guidance for unresolvable conflicts |
+| "Search before assuming" | Ralph article: LLMs produce false negatives from code search |
+| Retry cap (3 times) | "A reasonable number of times" was vague |
+| Configurable COMPLETE criteria | Old criteria let agent declare victory with everything in draft |
+| Mid-run instruction injection | No way to steer without killing and restarting |
+| Per-iteration timeout (30 min) | No watchdog for hung processes |
+
 ### Open questions
 
 - Could add `--output-format stream-json` with a jq pipeline for real-time text output (adds complexity)
-- No timeout/watchdog for hung `claude` processes
-- Self-review loop not yet fully validated end-to-end across multiple iterations
+- Ctrl+C doesn't propagate when claude is inside command substitution `$()` — must `kill <pid>` directly
 
 ## Known Gaps
 
