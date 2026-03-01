@@ -156,6 +156,16 @@ DELIVER_DATE=$(date -u +%Y-%m-%d)
 git rm docs/plans/active/<slug>.md
 ln -s ../YYYY-MM-DD-<slug>.md docs/plans/delivered/<slug>.md
 git add docs/plans/delivered/<slug>.md docs/plans/YYYY-MM-DD-<slug>.md
+```
+
+**Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file, check the box, and update the annotation:
+
+```markdown
+- [x] [slug] description <!-- pr: #<number>, status: merged -->
+```
+
+```bash
+git add docs/sprints/
 git commit -m "plot: deliver <slug>"
 git push
 ```
@@ -170,6 +180,8 @@ Print:
 - Index: moved from `active/` to `delivered/`
 - All implementation PRs: merged
 - If the plan has a Sprint field: show sprint progress ("N/M sprint items delivered")
+- Progress: `[ ] Draft > [ ] Approved > [x] Delivered > [ ] Released`
 - Type reminder:
   - If feature/bug: "Run `/plot-release` when ready to cut a versioned release."
   - If docs/infra: "Live on main — no release needed."
+- Tip: Run `/plot` to see overall status and what to do next

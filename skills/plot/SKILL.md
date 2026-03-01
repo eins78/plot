@@ -148,6 +148,148 @@ The Release phase includes an RC verification loop. Individual plans don't track
 - `/plot` detects orphan impl branches (no approved plan) — prevents coding without context
 - Phase field in plan files is machine-readable — every command checks current phase before acting
 
+## Flexibility
+
+Natural language overrides are expected and should be honored. Users may say:
+
+- **Batch:** "Approve and deliver in one go" — run `/plot-approve` then `/plot-deliver` sequentially
+- **Skip:** "Skip the PR, just merge" — bypass draft PR if the user has context
+- **Branch override:** "Use `feature/my-name` instead" — accept non-standard branch names
+- **Combine:** "Create the plan and add it to the sprint" — chain `/plot-idea` + `/plot-sprint`
+- **Abbreviate:** "Deliver everything" — iterate over all active plans
+
+**Relationship:** Guardrails protect (prevent data loss, enforce phase ordering). Flexibility serves (reduce ceremony when the user knows what they want). If an override would violate a guardrail, confirm with the user before proceeding.
+
+## What Goes Where
+
+| Concern | Reusable Skill (SKILL.md) | Project CLAUDE.md |
+|---------|--------------------------|-------------------|
+| Workflow steps & lifecycle | Yes | No |
+| Branch naming conventions | Yes (defaults) | Override if different |
+| Directory paths | No | Yes (`docs/plans/`, etc.) |
+| Project board name | No | Yes |
+| Merge strategy preference | No | Yes |
+| Release note tooling | No | Yes (or auto-detected) |
+| Sprint cadence / dates | No | Yes (or in sprint file) |
+
+**Rule of thumb:** If it changes per project, it belongs in CLAUDE.md. If it's the same everywhere, it belongs in the skill.
+
+See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
+
+## Troubleshooting
+
+### Plan PR has merge conflicts
+
+The `idea/<slug>` branch has diverged from main.
+
+```bash
+git checkout idea/<slug>
+git fetch origin main
+git rebase origin/main
+# Resolve conflicts
+git push --force-with-lease
+```
+
+Then retry `/plot-approve <slug>`.
+
+### Implementation PR fails CI
+
+1. Check CI logs: `gh pr checks <number>`
+2. Fix on the implementation branch, push
+3. Wait for CI to pass, then merge normally
+
+If CI is flaky or irrelevant to this PR, the human decides whether to merge anyway.
+
+### Delivery check finds incomplete work
+
+`/plot-deliver` reports partial/missing deliverables. Options:
+
+1. **Hold off** — go finish the work, then re-run `/plot-deliver`
+2. **Deliver anyway** — accept the gap (the skill asks for confirmation)
+3. **Update the plan** — if scope changed, edit the plan file on main to match what was actually built, then re-run `/plot-deliver`
+
+### Plan file Phase is out of sync
+
+If the Phase field doesn't match reality (e.g., plan says "Draft" but PR is merged):
+
+```bash
+git checkout main && git pull
+# Fix the Phase field in docs/plans/YYYY-MM-DD-<slug>.md
+git add docs/plans/YYYY-MM-DD-<slug>.md
+git commit -m "plot: fix phase for <slug>"
+git push
+```
+
+### Orphan implementation branch
+
+`/plot` warns about impl branches with no approved plan. Options:
+
+1. **Create the plan retroactively** — `/plot-idea <slug>: <title>`, approve it
+2. **Just merge it** — if the work is small, skip the plan and merge directly
+3. **Delete the branch** — if the work is abandoned
+
+### Release check finds missing release notes
+
+`/plot-release` cross-check reports gaps. Options:
+
+1. **Add the missing entries** — update CHANGELOG.md or add changeset files
+2. **Proceed anyway** — if the gap is intentional (internal change, no user impact)
+3. **Go back to deliver** — if a plan was missed entirely
+
+### Sprint past end date with incomplete must-haves
+
+`/plot-sprint close` shows incomplete must-haves. Options:
+
+1. **Close anyway** — must-haves stay unchecked in place as a record
+2. **Move to Deferred** — explicitly acknowledge they didn't make the timebox
+3. **Extend the sprint** — edit the End date (but consider: is this hiding a scope problem?)
+
+## Automation Output
+
+When the conversation context indicates automation, append a fenced JSON block after the normal human-readable summary. Normal output is always produced first — JSON is appended, never replaces.
+
+### Detection
+
+Automation mode is active when any of these are true:
+- Words like "automation", "machine-readable", "ralph" appear in conversation context
+- `Output format: json` is set in the project's `## Plot Config`
+
+### Schema
+
+Each spoke skill appends a `json plot-output` fenced block:
+
+```json
+{
+  "command": "/plot-deliver",
+  "slug": "sse-backpressure",
+  "phase": "Delivered",
+  "status": "delivered",
+  "prs": [{"number": 12, "state": "MERGED"}, {"number": 13, "state": "MERGED"}],
+  "sprint": "week-1",
+  "next_action": "/plot-release",
+  "message": "All implementation PRs merged. Plan delivered."
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `command` | string | Which skill produced this output |
+| `slug` | string | The plan or sprint slug |
+| `phase` | string | Current phase after this action |
+| `status` | string | Result: "created", "approved", "delivered", "released", "error" |
+| `prs` | array? | PR numbers and states |
+| `sprint` | string? | Sprint slug if plan is in a sprint |
+| `next_action` | string | Suggested next command |
+| `message` | string | Human-readable one-line summary |
+
+### Progress Object (optional)
+
+For plan lifecycle commands, include a `progress` field:
+
+```json
+"progress": {"draft": true, "approved": true, "delivered": true, "released": false}
+```
+
 ## Dispatcher
 
 The `/plot` command analyzes current git state and suggests the next action.

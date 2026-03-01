@@ -55,6 +55,19 @@ Extract `slug` and `title` from `$ARGUMENTS`:
 - If no `:` found, treat the entire input as the slug and ask for a title
 - Slug must match `[a-z0-9-]+` (lowercase letters, digits, hyphens only). If it doesn't, ask the user to fix it rather than silently normalizing
 
+### Batch Mode
+
+If the user provides multiple slugs (comma-separated or as a list), or asks to create multiple plans "in batch" or "together":
+
+1. Parse each `<slug>: <title>` pair
+2. Create a single branch: `idea/batch-<first-slug>` (or a name the user provides)
+3. Create all plan files on that branch, each with its own file and active symlink
+4. Create a single PR titled "Plan: <title1>, <title2>, ..."
+
+The plans are still independent after approval — `/plot-approve` processes each slug separately.
+
+**Detection:** Multiple `:` entries in `$ARGUMENTS`, words like "batch"/"together"/"all at once" in conversation context, or an explicit list of slugs.
+
 ### 2. Pre-flight Checks
 
 - Warn if working tree has uncommitted changes (offer to stash)
@@ -80,50 +93,7 @@ git checkout -b idea/<slug> origin/main
 CREATE_DATE=$(date -u +%Y-%m-%d)
 ```
 
-Write `docs/plans/${CREATE_DATE}-<slug>.md` with this template:
-
-```markdown
-# <title>
-
-> <title as one-line summary>
-
-## Status
-
-- **Phase:** Draft
-- **Type:** feature | bug | docs | infra
-- **Sprint:** <!-- optional, filled when plan is added to a sprint -->
-
-## Changelog
-
-<!-- Release note entry. Written during planning, refined during implementation. -->
-
-- <user-facing change description>
-
-## Motivation
-
-<!-- Why does this matter? What problem does it solve? -->
-
-## Design
-
-### Approach
-
-<!-- How will this be implemented? Key architectural decisions. -->
-
-### Open Questions
-
-- [ ] ...
-
-## Branches
-
-<!-- Branches to create when approved: -->
-<!-- - `type/name` — description -->
-
-- `feature/<slug>` — <description>
-
-## Notes
-
-<!-- Session log, decisions, links -->
-```
+Write `docs/plans/${CREATE_DATE}-<slug>.md` using the template from `skills/plot/templates/plan.md`, substituting `<title>` and `<slug>`.
 
 Ask the user what **Type** to use, presenting this reference:
 
@@ -184,7 +154,9 @@ Print:
 - Plan file: `docs/plans/<CREATE_DATE>-<slug>.md`
 - Active index: `docs/plans/active/<slug>.md` (symlink)
 - PR URL (draft)
-- Next steps:
-  1. Refine the plan (especially the **Branches** section)
+- Progress: `[x] Draft > [ ] Approved > [ ] Delivered > [ ] Released`
+- Suggested next actions:
+  1. Refine the plan (especially **Branches** and **Design** sections)
   2. When ready for review: `gh pr ready <number>`
   3. After review: `/plot-approve <slug>`
+  - _Alternative:_ add to a sprint with `/plot-sprint <sprint> ` then add `[<slug>]` as an item

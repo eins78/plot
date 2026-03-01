@@ -53,6 +53,17 @@ If `$ARGUMENTS` is empty or missing:
 
 Extract `slug` from `$ARGUMENTS` (trimmed, lowercase, hyphens only).
 
+### Batch Mode
+
+If the user asks to approve multiple plans at once ("approve all", or lists multiple slugs):
+
+1. Verify all plan PRs are non-draft or already merged
+2. Merge each plan PR sequentially (step 3)
+3. Create all implementation branches (steps 4-5)
+4. Print a combined summary
+
+This works naturally — loop the single-plan flow for each slug. No special syntax needed.
+
 ### 2. Determine Plan PR State
 
 Run the helper to get plan PR state:
@@ -224,9 +235,17 @@ After:
 - `bug/sse-memory-leak` — Fix connection leak → #13
 ```
 
+4. **Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file and add an annotation comment:
+
+```markdown
+- [ ] [slug] description <!-- pr: #<number>, status: draft, branch: <type>/<name> -->
+```
+
+If the plan spawns multiple branches, annotate the item with the first (primary) PR.
+
 ```bash
 git checkout main
-git add docs/plans/YYYY-MM-DD-<slug>.md
+git add docs/plans/YYYY-MM-DD-<slug>.md docs/sprints/
 git commit -m "plot: link implementation PRs for <slug>"
 git push
 ```
@@ -240,4 +259,8 @@ Print:
   - `type/name` → PR #<number> (URL)
 - If release note tooling was found in step 6: "Remember to add release note entries on each implementation branch (e.g., `pnpm exec changeset`)."
 - If the plan has a Sprint field: "Part of sprint `<sprint-name>`."
-- Next step: check out a branch and start implementing
+- Progress: `[ ] Draft > [x] Approved > [ ] Delivered > [ ] Released`
+- Suggested next actions:
+  1. Check out a branch and start implementing: `git checkout <type>/<name>`
+  2. When implementation is done: `/plot-deliver <slug>`
+  - _Alternative:_ work on multiple branches in parallel using worktrees
