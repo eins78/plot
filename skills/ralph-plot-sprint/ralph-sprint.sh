@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# ralph-sprint: Run automated sprint iterations via claude -p + /plot-sprint.
-# Notifies via ntfy when human action is needed.
-# On exit, runs a wrap-up session summarizing all iteration sessions.
+# ralph-sprint: Automated sprint loop using /ralph-plot-sprint skill.
+# Each iteration invokes claude -p with the skill, reads COMPLETE/BLOCKED signals,
+# and notifies via ntfy when human action is needed.
 #
 # With -p mode, claude buffers text output (no incremental streaming).
 # Each iteration's output appears in full once the agent finishes.
@@ -11,21 +11,12 @@ set -e
 # --- Configuration ---
 
 RALPH_SPRINT_CLAUDE="${RALPH_SPRINT_CLAUDE:-claude --dangerously-skip-permissions}"
+RALPH_SPRINT_SKILL="${RALPH_SPRINT_SKILL:-ralph-plot-sprint}"
 RALPH_SPRINT_AUTOMERGE="${RALPH_SPRINT_AUTOMERGE:-false}"
 RALPH_SPRINT_TIMEOUT="${RALPH_SPRINT_TIMEOUT:-1800}"
 NTFY_URL="${CLAUDE_NTFY_URL:?"Set CLAUDE_NTFY_URL (e.g. https://ntfy.sh)"}"
 NTFY_TOKEN="${CLAUDE_NTFY_TOKEN:?"Set CLAUDE_NTFY_TOKEN"}"
 NTFY_TOPIC="${CLAUDE_NTFY_TOPIC:-claude-on-$(hostname -s)}"
-
-# --- Merge behavior ---
-
-if [ "$RALPH_SPRINT_AUTOMERGE" = "true" ]; then
-  MERGE_INSTRUCTION='Then merge ("gh pr merge --squash").'
-  COMPLETE_CRITERIA='all PRs merged, all code features have demos in docs/demos/, RC release tagged via /plot-release rc'
-else
-  MERGE_INSTRUCTION='Do NOT merge — leave PRs ready for human review.'
-  COMPLETE_CRITERIA='all PRs marked ready, CI green, zero unresolved comments'
-fi
 
 # --- State ---
 
@@ -66,14 +57,15 @@ if [ -z "$1" ] || [ -z "$2" ]; then
   echo ""
   echo "Environment variables:"
   echo "  RALPH_SPRINT_CLAUDE      Claude command (default: claude --dangerously-skip-permissions)"
-  echo "  RALPH_SPRINT_AUTOMERGE   Auto-merge reviewed PRs (default: false)"
+  echo "  RALPH_SPRINT_SKILL       Iteration skill name (default: ralph-plot-sprint)"
+  echo "  RALPH_SPRINT_AUTOMERGE   Auto-merge reviewed PRs: true|false (default: false)"
   echo "  RALPH_SPRINT_TIMEOUT     Per-iteration timeout in seconds (default: 1800)"
   echo "  CLAUDE_NTFY_URL          ntfy server URL (required)"
   echo "  CLAUDE_NTFY_TOKEN        ntfy auth token (required)"
   echo "  CLAUDE_NTFY_TOPIC        ntfy topic (default: claude-on-\$(hostname -s))"
   echo ""
   echo "Mid-run steering:"
-  echo "  echo 'Skip PR #38' > .ralph-state/instructions.md"
+  echo "  echo 'Focus on demos' > .ralph-state/instructions.md"
   echo "  (Injected into the next iteration's prompt, then deleted)"
   exit 1
 fi
@@ -93,82 +85,29 @@ fi
 ITERATIONS=$1
 SLUG=$2
 
+# --- Pre-flight checks ---
+
+# Verify GitHub CLI is authenticated (saves burning an iteration on auth failure)
+if ! gh auth status &>/dev/null; then
+  EXITING_NORMALLY=true
+  echo "Error: GitHub CLI not authenticated. Run: gh auth login -h github.com"
+  exit 1
+fi
+
+# Verify sprint file exists
+if ! ls docs/sprints/*-"$SLUG".md &>/dev/null 2>&1; then
+  EXITING_NORMALLY=true
+  echo "Error: No sprint file found for slug '$SLUG' in docs/sprints/"
+  echo "Available sprints:"
+  ls docs/sprints/*.md 2>/dev/null | xargs -I{} basename {} .md | sed 's/^[0-9-]*W[0-9]*-//' | sort -u || echo "  (none)"
+  exit 1
+fi
+
 # --- Agent prompt ---
-# Quoted heredoc prevents variable expansion; variables are substituted after.
 
-# shellcheck disable=SC2016
-IFS= read -r -d '' PROMPT <<'PROMPT' || true
-/plot-sprint $SLUG
+PROMPT="/$RALPH_SPRINT_SKILL $SLUG
 
-PRIORITY ORDER — follow this on every iteration:
-
-0. REBASE first. Run "git fetch origin && git rebase origin/HEAD" to ensure
-   the worktree has the latest changes. If the rebase has conflicts you cannot
-   resolve cleanly, abort it ("git rebase --abort") and output
-   <promise>BLOCKED</promise>.
-
-1. CHECK OPEN PRs.
-   List open PRs for this sprint. For each PR, check:
-   a) CI status via "gh pr checks". If any are failing, investigate and fix.
-   b) Unresolved review comments via "gh api". If any exist, fix the underlying
-      issues, push the fixes, then reply to each comment and resolve it.
-
-2. FINALIZE any PR that has green CI, zero unresolved comments, and has been
-   reviewed (has at least one prior review). Mark draft PRs as ready first
-   ("gh pr ready <n>"). $MERGE_INSTRUCTION
-   Finalize base-branch PRs first. After merging, rebase remaining PRs.
-
-3. PICK THE NEXT TASK if work remains.
-   Find the highest-priority unblocked task.
-   - If the task references a plan (slug notation) that is not yet approved,
-     run /plot-approve if the plan PR is ready, or output BLOCKED if it needs
-     human review.
-   - For substantial new tasks with no plan, create one with /plot-idea first.
-   - For small tasks (docs, config, minor fixes), implement directly.
-   NEVER create a feature/* branch for plan-only changes. Plan documents
-   belong on main — use /plot-idea for new plans. If a sprint item is
-   plan-only (no implementation needed), mark it complete without a PR.
-   Before implementing, search the codebase — do not assume functionality is
-   missing. Implement, run tests and type checks, then create a PR.
-
-4. SELF-REVIEW any open PR that has NO review comments at all.
-   PRs with existing comments (even if resolved) count as already reviewed.
-   Only re-review a PR if it has new commits since the last review.
-   For PRs containing ONLY documentation/plan files (no code), do a single
-   light review for factual errors and structural issues only.
-   Use /pr-review-toolkit:review-pr for code PRs. Post findings as individual
-   PR review comments via "gh api". Be harsh. Do NOT fix findings in this
-   iteration — leave them for the next iteration.
-
-5. CREATE DEMOS for any merged code features missing a demo in docs/demos/.
-   Check docs/definition-of-done.md for requirements.
-   Use /show-your-work to create each demo. Plan-only sprint items (no code
-   implementation) do NOT need demos. Up to TWO demos per iteration.
-   After creating demos, check if all code features now have demos.
-
-6. TAG RC RELEASE once all code features have demos.
-   Run /plot-release rc to determine version bump, tag the RC, and create
-   a verification checklist. Then output BLOCKED (RC needs human testing).
-
-Each iteration follows all steps above in order. "Single task" means step 3:
-implement at most ONE new sprint task per iteration. Steps 0-2 and 4 apply
-to ALL relevant PRs each iteration.
-
-Retry transient failures (network errors, flaky tests) up to 3 times.
-
-When done, write a one-paragraph summary of what you accomplished, then
-output exactly one of these promise signals on its own line:
-  <promise>COMPLETE</promise> — all sprint tasks done, $COMPLETE_CRITERIA
-  <promise>BLOCKED</promise> — truly stuck: external dependency, needs human action
-
-Do NOT output BLOCKED just because you posted review comments — fixing those
-is the next iteration's job. Only output a signal when the sprint is COMPLETE
-or genuinely BLOCKED. If you did useful work and there is more to do, end
-your summary without any promise signal.
-PROMPT
-PROMPT="${PROMPT//\$SLUG/$SLUG}"
-PROMPT="${PROMPT//\$MERGE_INSTRUCTION/$MERGE_INSTRUCTION}"
-PROMPT="${PROMPT//\$COMPLETE_CRITERIA/$COMPLETE_CRITERIA}"
+AUTOMERGE=$RALPH_SPRINT_AUTOMERGE"
 
 # --- ntfy ---
 
@@ -237,8 +176,11 @@ $ITER_PROMPT"
 
   echo "$result"
 
-  # Extract summary: last ~10 lines before the promise tag
+  # Extract summary: last ~10 lines before the promise tag (or last 10 lines if no tag)
   summary=$(echo "$result" | grep -B 50 '<promise>' | grep -v '<promise>' | tail -10) || true
+  if [ -z "$summary" ]; then
+    summary=$(echo "$result" | tail -10)
+  fi
 
   if [[ "$result" == *"<promise>COMPLETE</promise>"* ]]; then
     notify "Sprint Complete" "Sprint '$SLUG' complete after $i iterations.
@@ -259,7 +201,10 @@ $summary" "octagonal_sign"
     exit 1
 
   else
-    # No recognized signal — agent did work but forgot the keyword. Continue.
+    # No recognized signal — agent did work but there is more to do. Continue.
+    notify "Sprint Iteration $i/$ITERATIONS" "Sprint '$SLUG' — iteration $i done.
+
+$summary" "arrows_counterclockwise"
     echo "Iteration $i: no signal detected — continuing."
   fi
 done
