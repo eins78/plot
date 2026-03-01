@@ -56,3 +56,54 @@ Script version: post-REVIEW-removal, COMPLETE/BLOCKED only, rebase step, RALPH_S
 - `skills/plot-sprint/install.sh` — symlink installer
 - `skills/plot-sprint/README.md` — dev notes
 - `~/OPS/home-workspace/sessionlogs/2026-02-28-ralph-sprint-import.md` — sessionlog
+
+---
+
+# ralph-sprint monitor log — 2026-03-01
+
+## Run: `RALPH_SPRINT_AUTOMERGE=true ralph-sprint.sh 5 steal-features` on qubert project
+
+**Goal:** Drive sprint to RC release — merge all 8 draft PRs, create demos, tag RC.
+
+**Pre-run setup:**
+- Created `docs/definition-of-done.md` with demo requirement
+- Added DoD section to `CLAUDE.md`
+- Committed and pushed to main (`9b0858e`)
+
+**Configuration:**
+- RALPH_SPRINT_AUTOMERGE=true (new — first time using automerge)
+- RALPH_SPRINT_TIMEOUT=1800 (default 30min per iteration)
+- Starting with 5 iterations, will extend if needed
+
+**Expected agent behavior:**
+1. Rebase, mark draft PRs ready, merge them (base branches first)
+2. Create demos for merged features (DoD enforcement)
+3. Tag RC release via /plot-release rc
+
+**Script fix during run:** Added `</dev/null` to the claude command inside `$()` substitution — without it, the second iteration's claude process went to `T` (stopped) state, likely due to SIGTTIN when it tried to read stdin from inside the subshell.
+
+## Iteration log
+
+| Iter | Elapsed | Work done | Signal | Notes |
+|------|---------|-----------|--------|-------|
+| 1 | ~30min | Rebased, marked all 8 PRs ready, merged #33→#34→#35→#36→#37→#38→#39 (7 PRs in order), resolved merge conflicts on #37 (seatbelt) | None | Automerge working! Correct dependency order. Resolved UU conflicts in claude.ts, schemas.ts, slack.ts after rebasing #37 onto merged changes. |
+| 2 | ~10min | Rebased #40 onto main (5-file conflicts from 8 merged PRs), merged #40 (channel-pairing) | COMPLETE | All 8 PRs merged! But agent ignored DoD — no demos created, no RC tag. |
+| wrap | ~2min | Read 2 transcripts, updated sessionlog, pulled 8 merged PRs (+2,847 LOC) | — | Committed `66fc3df` |
+
+## Observations
+
+### What worked
+- **Automerge is fast:** 8 PRs merged in 2 iterations (~40 min), vs 13 iterations just for review in the previous run
+- **Dependency order correct:** Agent merged base PRs first, rebased later PRs
+- **Conflict resolution works:** Agent handled UU conflicts (3 files on #37, 5 files on #40) cleanly
+- **`</dev/null` fix critical:** Without it, second iteration's claude goes to `T` (stopped) state — SIGTTIN from command substitution subshell
+
+### What didn't work
+- **DoD completely ignored:** Agent didn't read `docs/definition-of-done.md`, didn't create demos, didn't attempt RC release. Signaled COMPLETE after merging all PRs.
+- **CLAUDE.md DoD section not enforced:** Despite adding "Every code feature MUST have a demo" to CLAUDE.md, the agent treated "all PRs merged" as the complete condition — matching the `$COMPLETE_CRITERIA` from the ralph-sprint prompt
+- **Root cause:** The ralph-sprint prompt says `COMPLETE — all sprint tasks done, all PRs merged`. This overrides the CLAUDE.md DoD section. The prompt needs to reference the DoD.
+
+### Squash merge question
+- Agent used `gh pr merge --squash` per prompt instruction. This loses branch commit history.
+- Trade-off: cleaner main history vs. losing implementation details
+- Decision: Keep squash merge — sessionlogs preserve the implementation narrative, and clean git history is more valuable for an open source repo.
