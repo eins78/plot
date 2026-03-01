@@ -90,6 +90,18 @@ Script version: post-REVIEW-removal, COMPLETE/BLOCKED only, rebase step, RALPH_S
 | 2 | ~10min | Rebased #40 onto main (5-file conflicts from 8 merged PRs), merged #40 (channel-pairing) | COMPLETE | All 8 PRs merged! But agent ignored DoD — no demos created, no RC tag. |
 | wrap | ~2min | Read 2 transcripts, updated sessionlog, pulled 8 merged PRs (+2,847 LOC) | — | Committed `66fc3df` |
 
+| 2 | ~10min | Created seatbelt-sandbox demo, tagged v0.3.0-rc.1, created release checklist | BLOCKED | RC needs human testing. browser-automation + channel-pairing demos already existed from run 5. |
+| wrap | ~2min | Updated sessionlog (run 7), summarized demos + RC outcome | — | Committed `c230ab1` |
+
+## Final state (run 7)
+
+All DoD criteria satisfied:
+- 8/8 sprint PRs merged to main
+- 7/7 code feature demos in `docs/demos/2026-02-28-sprint-steal-features/`
+- RC `v0.3.0-rc.1` tagged and pushed
+- Release checklist at `docs/releases/v0.3.0-checklist.md`
+- Sprint BLOCKED awaiting human testing
+
 ## Observations
 
 ### What worked
@@ -98,10 +110,20 @@ Script version: post-REVIEW-removal, COMPLETE/BLOCKED only, rebase step, RALPH_S
 - **Conflict resolution works:** Agent handled UU conflicts (3 files on #37, 5 files on #40) cleanly
 - **`</dev/null` fix critical:** Without it, second iteration's claude goes to `T` (stopped) state — SIGTTIN from command substitution subshell
 
-### What didn't work
+### What didn't work (run 5, before fix)
 - **DoD completely ignored:** Agent didn't read `docs/definition-of-done.md`, didn't create demos, didn't attempt RC release. Signaled COMPLETE after merging all PRs.
 - **CLAUDE.md DoD section not enforced:** Despite adding "Every code feature MUST have a demo" to CLAUDE.md, the agent treated "all PRs merged" as the complete condition — matching the `$COMPLETE_CRITERIA` from the ralph-sprint prompt
-- **Root cause:** The ralph-sprint prompt says `COMPLETE — all sprint tasks done, all PRs merged`. This overrides the CLAUDE.md DoD section. The prompt needs to reference the DoD.
+- **Root cause:** The ralph-sprint prompt said `COMPLETE — all sprint tasks done, all PRs merged`. This overrides the CLAUDE.md DoD section. Fixed by adding steps 5+6 and updating COMPLETE_CRITERIA.
+
+### Run 6 (auth failure)
+- GitHub CLI token expired/invalid due to locked keychain — sprint blocked immediately
+- Fix: unlock keychain first (`gh auth status` to verify)
+
+### Run 7 (demos + RC, SUCCESS)
+- Agent found existing demos from run 5, created missing seatbelt-sandbox demo
+- Tagged v0.3.0-rc.1 correctly, created verification checklist
+- Correctly output BLOCKED (not COMPLETE) because RC needs human testing
+- Step 6 instruction "output BLOCKED" worked exactly as intended
 
 ### Squash merge question
 - Agent used `gh pr merge --squash` per prompt instruction. This loses branch commit history.
