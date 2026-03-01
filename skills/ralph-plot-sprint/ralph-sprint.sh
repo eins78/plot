@@ -176,11 +176,8 @@ $ITER_PROMPT"
 
   echo "$result"
 
-  # Extract summary: last ~10 lines before the promise tag (or last 10 lines if no tag)
+  # Extract summary: last ~10 lines before the promise tag
   summary=$(echo "$result" | grep -B 50 '<promise>' | grep -v '<promise>' | tail -10) || true
-  if [ -z "$summary" ]; then
-    summary=$(echo "$result" | tail -10)
-  fi
 
   if [[ "$result" == *"<promise>COMPLETE</promise>"* ]]; then
     notify "Sprint Complete" "Sprint '$SLUG' complete after $i iterations.
@@ -202,9 +199,6 @@ $summary" "octagonal_sign"
 
   else
     # No recognized signal — agent did work but there is more to do. Continue.
-    notify "Sprint Iteration $i/$ITERATIONS" "Sprint '$SLUG' — iteration $i done.
-
-$summary" "arrows_counterclockwise"
     echo "Iteration $i: no signal detected — continuing."
   fi
 done
