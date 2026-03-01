@@ -1,11 +1,9 @@
 ---
 name: ralph-plot-sprint
 description: >
-  Only use when explicitly invoked as /ralph-plot-sprint. Do not activate automatically.
-  Executes one iteration of an automated plot-sprint run: reads sprint state, performs
-  the next necessary work, and outputs <promise>COMPLETE</promise> or
-  <promise>BLOCKED</promise>. Called by ralph-sprint.sh each loop iteration — can also
-  run manually to debug a specific iteration.
+  Only activate on explicit /ralph-plot-sprint invocation — never auto-activate.
+  Use when ralph-sprint.sh drives a sprint iteration, or when manually
+  debugging a specific sprint iteration by slug.
 globs: []
 license: MIT
 metadata:
@@ -119,6 +117,8 @@ git push --force-with-lease
 
 If AUTOMERGE=false: mark ready and stop — leave merging for the human.
 
+**If AUTOMERGE=false and all open PRs are already READY + green CI + reviewed** (no drafts, no failing CI, no unresolved comments, no new commits since last review): output BLOCKED — no further automation is possible until the human merges.
+
 ---
 
 ## Step 3: Build One Sprint Task
@@ -212,3 +212,14 @@ Write a one-paragraph summary of what you accomplished this iteration, then outp
 **Output COMPLETE only when** the project's DoD is fully satisfied:
 - If `docs/definition-of-done.md` exists: check every criterion in it
 - If no DoD file: all PRs finalized per the AUTOMERGE setting, all CI green
+
+---
+
+## Common Mistakes
+
+| Mistake | Effect | Prevention |
+|---------|--------|------------|
+| Running against a sprint in `Phase: Draft` | No items to work on; loop exhausts iterations | Check `Phase:` field in Step 0; output BLOCKED if not started |
+| Outputting BLOCKED after posting review comments | Loop exits; human must restart | BLOCKED only when truly stuck — review comments are normal iteration work |
+| Building a new task when unreviewed PRs exist | Step 4 is skipped; review debt accumulates | Step ordering is strict: fix → finalize → build → review |
+| Creating `feature/` branch for plan-only work | Wasted PR, confuses sprint state | Plan-only items commit directly to main |
