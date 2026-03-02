@@ -129,3 +129,64 @@ All DoD criteria satisfied:
 - Agent used `gh pr merge --squash` per prompt instruction. This loses branch commit history.
 - Trade-off: cleaner main history vs. losing implementation details
 - Decision: Keep squash merge — sessionlogs preserve the implementation narrative, and clean git history is more valuable for an open source repo.
+
+---
+
+# ralph-sprint monitor log — 2026-03-02
+
+## Run 10: `RALPH_SPRINT_AUTOMERGE=true ralph-sprint.sh 10 steal-features` — BDD backfill
+
+**Goal:** Add retroactive BDD scenarios for all sprint features merged without test coverage, then tag new RC.
+
+**Pre-run setup:**
+- Merged PR #42 (BDD-first enforcement) to main
+- Added 4 BDD scenario items to sprint file (channel-pairing, rate-limit, MCP, memory)
+- Committed `1f40635` and pushed
+
+**Issues found and fixed during monitoring:**
+
+1. **Stale worktree (critical):** `--worktree "sprint-steal-features"` reused a worktree at `efb15ed` (detached HEAD, 5 commits behind main). New BDD items invisible to agent. **Fix:** `git worktree remove .claude/worktrees/sprint-steal-features` — fresh worktree created from current main.
+
+2. **Step 0 decision tree missing unchecked items check (critical):** Decision tree short-circuited to BLOCKED when "no open PRs AND no missing demos AND RC tagged" — never checked for unchecked sprint items. **Fix:** Reordered decision tree: open PRs → unchecked items → demos → RC → BLOCKED. Also added "Unchecked items" to state summary table. Commit `e90fa6b`.
+
+3. **Stale web viewer build (notable):** `dist/web/` built Feb 8, before rate-limit code. 4 BDD tests failed: rate limit messages not rendered. **Fix:** `pnpm build` to rebuild. Not committed (dist/ is gitignored).
+
+**Runs 8-9 (failed):** BLOCKED immediately due to issues 1+2 above. Agent said "All items checked" despite 4 unchecked BDD items.
+
+## Iteration log (run 10, after fixes)
+
+| Iter | Elapsed | Work done | Signal | Notes |
+|------|---------|-----------|--------|-------|
+| 1 | ~20min | BDD scenarios for channel-pairing (8 scenarios), PR #43 created + self-reviewed + merged | None | Fix-review-merge in one iteration |
+| 2 | ~15min | BDD scenarios for rate-limit (5 scenarios), PR #44 created + self-reviewed + merged | None | 2 test sessions seeded, glossary updated |
+| 3 | ~20min | BDD scenarios for MCP support (8 scenarios, PR #45) + channel memory (7 scenarios, PR #46), self-reviewed both | None | Two items in one iteration |
+| 4 | ~15min | Fixed 6 review findings across PRs #45+#46, merged both | BLOCKED | All 15 items checked, RC v0.3.0-rc.1 exists |
+| wrap | ~3min | Updated sessionlog with run 10 | — | Committed `360bd6d` |
+
+**Post-loop:** Rebuilt web viewer, verified 108 tests pass (79 unit + 29 e2e), tagged v0.3.0-rc.2.
+
+## Final state
+
+- 15/15 sprint items checked (11 original + 4 BDD retroactive)
+- 4 new feature files: channel-pairing, rate-limit, mcp-support, channel-memory
+- 28 new BDD scenarios total
+- 108 tests passing
+- RC v0.3.0-rc.2 tagged and pushed
+
+## Observations
+
+### What worked
+- **Skill fix effective:** After adding unchecked items check to Step 0 + removing stale worktree, agent correctly picked up BDD items
+- **One-item-per-iteration mostly:** Agent did channel-pairing and rate-limit separately (1 each), then combined MCP + memory in iteration 3
+- **Self-review quality:** Agent found real issues — string interpolation injection risks, weak assertions, missing edge cases
+- **AUTOMERGE smooth:** All 4 PRs merged automatically after review fixes
+
+### What didn't work
+- **Worktree staleness:** The `--worktree` flag reuses existing worktrees. If main advances (e.g., new sprint items pushed), the worktree is stale. The script should either remove the worktree before starting or rebase it to origin/main.
+- **Decision tree blind spot:** Original Step 0 only checked: open PRs, missing demos, RC tag. Didn't check for unchecked sprint items — the most basic signal of incomplete work.
+- **RC not re-tagged by agent:** Agent output BLOCKED with existing RC v0.3.0-rc.1, didn't tag v0.3.0-rc.2 despite commits after the tag. Tagged manually.
+- **`pnpm test` vs `pnpm ci`:** `pnpm test` uses built `dist/web/` but doesn't rebuild. Stale build caused 4 false test failures. Consider adding build step to `pnpm test` or at least checking build freshness.
+
+### Skill improvements made
+- `e90fa6b` — Step 0 decision tree reordered: open PRs → unchecked items → demos → RC → BLOCKED
+- Added "Unchecked items" row to state summary table
