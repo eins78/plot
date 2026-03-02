@@ -47,6 +47,7 @@ cat docs/definition-of-done.md 2>/dev/null || echo "(no DoD file)"
 
 | Check | Command | Result |
 |-------|---------|--------|
+| Unchecked items | grep `- [ ]` in sprint file | List or "none" |
 | Open PRs | `gh pr list --state open` | List or "none" |
 | Failing CI | `gh pr checks <n>` per open PR | List or "all green" |
 | Unresolved comments | `gh api ...pulls/<n>/comments` per open PR | List or "none" |
@@ -67,10 +68,11 @@ Check PR #<N> in repo <owner/repo>:
 ```
 
 **After orienting, decide which steps apply this iteration:**
-- If no open PRs AND no missing demos AND RC already tagged → output BLOCKED (sprint is complete pending human testing)
-- If no open PRs AND no missing demos → go to Step 6 (RC release)
-- If no open PRs AND missing demos → go to Step 5 (demos)
 - If open PRs exist → start at Step 1
+- If unchecked sprint items exist (no open PR yet) → go to Step 3
+- If missing demos → go to Step 5
+- If RC not yet tagged → go to Step 6
+- Otherwise (no open PRs, no unchecked items, demos present, RC tagged) → output BLOCKED (sprint is complete pending human testing)
 
 ---
 
