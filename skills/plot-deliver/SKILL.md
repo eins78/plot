@@ -67,7 +67,7 @@ Resolve the symlink to find the actual plan file path (e.g., `docs/plans/YYYY-MM
 
 ### 3. Read and Parse Plan
 
-Read the plan file (resolved from the `active/` symlink) and parse the `## Branches` section for PR references. If the plan has a `Sprint: <name>` field in its Status section, extract it for the summary.
+Read the plan file (resolved from the `active/` symlink) and find the section headed with "Branches" (matches `## Branches`, `## Implementation Branches`, `### Implementation Branches`, or any heading containing the word "Branches"). Parse it for PR references. If the plan has a `Sprint: <name>` field in its Status section, extract it for the summary.
 
 Expected format after `/plot-approve`:
 ```markdown
@@ -161,10 +161,14 @@ ln -s ../YYYY-MM-DD-<slug>.md docs/plans/delivered/<slug>.md
 git add docs/plans/delivered/<slug>.md docs/plans/YYYY-MM-DD-<slug>.md
 ```
 
-**Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file, check the box, and update the annotation:
+**Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file.
+
+**Before checking the box:** re-read the plan's branches section (heading containing "Branches"). For each branch, verify its PR is merged via `gh pr view <N> --json state`. If ANY branch PR is not merged, do NOT check the sprint item — warn and list unmerged branches.
+
+When all branches are verified merged, check the box and update annotation:
 
 ```markdown
-- [x] [slug] description <!-- pr: #<number>, status: merged -->
+- [x] [slug] description <!-- status: delivered, pr: #<primary>, branches: N/N -->
 ```
 
 ```bash

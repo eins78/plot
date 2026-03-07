@@ -25,6 +25,33 @@ Parse `$ARGUMENTS`:
 
 ---
 
+## DoD Compliance Checklist
+
+When a DoD file exists (`docs/definition-of-done.md`), use this checklist to verify PR compliance. Referenced by Steps 1, 2, 3, and 4.
+
+**Classify each feature** against DoD exemption rules:
+- `needs_bdd`: Yes unless Slack-only behavior, pure config/infra, or internal refactoring
+- `needs_docs`: Yes unless internal refactoring, test-only, or CI/infra
+- `needs_changeset`: Yes unless docs, tests, infra, or refactoring
+
+**Check PR compliance** (for PRs where the classification requires it):
+```bash
+# BDD check
+gh pr diff <n> --name-only | grep -E '\.(feature)$'
+
+# Docs check
+gh pr diff <n> --name-only | grep -E '(user-guide|admin-guide)\.md$'
+
+# Changeset check
+gh pr diff <n> --name-only | grep -E '\.changeset/.*\.md$'
+```
+
+A PR is **DoD-compliant** when all required artifacts are present. A PR with DoD gaps is treated the same as a PR with failing CI — it cannot be finalized.
+
+If no DoD file exists, skip all DoD checks.
+
+---
+
 ## Step 0: Orient
 
 Read the sprint state before deciding what to do. This step always runs.
@@ -48,11 +75,15 @@ cat docs/definition-of-done.md 2>/dev/null || echo "(no DoD file)"
 | Check | Command | Result |
 |-------|---------|--------|
 | Unchecked items | grep `- [ ]` in sprint file | List or "none" |
+| Plan branch progress | For each unchecked `[slug]` item: read plan file, find heading containing "Branches", cross-reference with `gh pr list --state all` | e.g., "prod-config: 1/7 branches merged" or "no branches section" |
 | Open PRs | `gh pr list --state open` | List or "none" |
 | Failing CI | `gh pr checks <n>` per open PR | List or "all green" |
 | Unresolved comments | `gh api ...pulls/<n>/comments` per open PR | List or "none" |
+| DoD compliance | Run DoD Compliance Checklist for each open PR | Gaps or "all compliant" |
 | Missing demos | compare sprint code items to `ls docs/demos/` | List or "all present" |
 | RC tag | `git tag --list 'v*-rc*'` | Tag or "none" |
+
+**Reading plan branches:** Find the plan file via `docs/plans/active/<slug>.md` or `docs/plans/delivered/<slug>.md` (resolve symlink). Search for a heading containing "Branches" (matches `## Branches`, `## Implementation Branches`, `### Implementation Branches`). Parse branch names from lines starting with `- ` followed by a backtick-quoted branch name. For each branch, check if a PR exists and its state (MERGED/OPEN/CLOSED) via `gh pr list --state all --head <branch-name>`.
 
 **For sprints with more than 3 open PRs:** use parallel subagents to gather CI and review status. Launch one Task agent per PR with the prompt below, collect all results before proceeding:
 
@@ -67,17 +98,21 @@ Check PR #<N> in repo <owner/repo>:
    Return: "SHA changed since review: yes/no"
 ```
 
-**After orienting, decide which steps apply this iteration:**
-- If open PRs exist → start at Step 1
-- If unchecked sprint items exist (no open PR yet) → go to Step 3
-- If missing demos → go to Step 5
-- If RC tagged but commits exist after latest RC tag (`git log $(git tag -l 'v*-rc*' --sort=-v:refname | head -1)..HEAD --oneline | head -1`) → go to Step 6 (re-tag)
-- If RC not yet tagged → go to Step 6
+**After orienting, pick ONE step for this iteration — the first match wins:**
+- If open PRs have failing CI, unresolved comments, **or DoD compliance gaps** → **Step 1 only**
+- If open PRs are ready to finalize (green CI, reviewed, no unresolved, **DoD-compliant**) → **Step 2 only**
+- If unchecked sprint items have undelivered plan branches (or no open PR yet) → **Step 3 only**
+- If open code PRs have no review comments → **Step 4 only**
+- If missing demos for merged features → **Step 5 only**
+- If RC tagged but commits exist after latest RC tag (`git log $(git tag -l 'v*-rc*' --sort=-v:refname | head -1)..HEAD --oneline | head -1`) → **Step 6 only** (re-tag)
+- If RC not yet tagged and all demos present → **Step 6 only**
 - Otherwise (no open PRs, no unchecked items, demos present, RC tagged, no post-RC commits) → output BLOCKED (sprint is complete pending human testing)
+
+**CRITICAL: Do exactly ONE step per iteration.** Do not cascade into subsequent steps. Each iteration is cheap — doing less per iteration keeps work focused, reviewable, and recoverable. After completing your one step, write the iteration summary and exit.
 
 ---
 
-## Step 1: Fix CI and Unresolved Comments
+## Step 1: Fix CI, Unresolved Comments, and DoD Gaps
 
 For each open PR with failing CI or unresolved review comments:
 
@@ -96,11 +131,31 @@ For each open PR with failing CI or unresolved review comments:
 
 Retry transient failures (network, flaky tests) up to 3 times before marking as blocked.
 
+**DoD gaps** (from Step 0 compliance check — see DoD Compliance Checklist):
+
+*Missing BDD scenarios* (`needs_bdd` but no `.feature` files in PR):
+1. Read the feature's behavior from PR diff and linked plan
+2. Write Gherkin scenarios in `tests/e2e/features/`
+3. Write step definitions (playwright-bdd)
+4. Run tests — verify scenarios fail (red) then pass after existing code (green)
+5. Push to the PR branch
+
+*Missing documentation* (`needs_docs` but no guide updates in PR):
+1. Determine whether user guide, admin guide, or both need updates
+2. Add the relevant section(s)
+3. Push to the PR branch
+
+*Missing changeset* (`needs_changeset` but no `.changeset/*.md` in PR):
+1. Write `.changeset/<name>.md` with appropriate bump level
+2. Push to the PR branch
+
 ---
 
 ## Step 2: Finalize Ready PRs
 
-Finalize PRs that have: green CI + zero unresolved comments + at least one prior review.
+Finalize PRs that have: green CI + zero unresolved comments + at least one prior review + **no DoD compliance gaps** (see DoD Compliance Checklist).
+
+**Do NOT merge any PR with DoD gaps.** If a PR is missing BDD scenarios, documentation, or changesets required by the DoD, it is not ready — route it to Step 1 in the next iteration.
 
 **Order matters:** finalize PRs whose base branch is `main` first. For PRs based on other feature branches, wait until that base branch is merged, then rebase.
 
@@ -126,17 +181,37 @@ If AUTOMERGE=false: mark ready and stop — leave merging for the human.
 
 ## Step 3: Build One Sprint Task
 
-If work remains in the sprint (unchecked items with no open PR), implement the highest-priority unblocked item.
+If work remains in the sprint (unchecked items with undelivered plan branches or no open PR), implement one unit of work.
 
 **Rules:**
-- At most ONE new task per iteration (steps 1-2 and 4 apply to all PRs; this step is singular)
+- At most ONE branch per iteration
 - Before implementing: search the codebase — do not assume functionality is missing
-- Plan-backed items (`[slug]` notation): check if the plan is approved; if not, run `/plot-approve` or output BLOCKED
 - Plan-only items (no implementation needed, just docs): mark complete on main without a PR — NEVER create `feature/*` for plan-only work
 - Substantial new tasks with no plan: use `/plot-idea` first
 - Small tasks (docs, config, minor fixes): implement directly
 
-Implement → run tests and type-check → create PR with changeset if user-facing.
+**For plan-backed items (`[slug]` notation):**
+
+1. Check if the plan is approved; if not, run `/plot-approve` or output BLOCKED
+2. **Read the plan's branches section** (find heading containing "Branches"). Parse branch names and descriptions.
+3. **Cross-reference with GitHub** to find which branches already have merged PRs:
+   ```bash
+   gh pr list --state all --json headRefName,state --jq '.[] | select(.headRefName | startswith("feature/"))'
+   ```
+4. **Pick the NEXT undelivered branch** — the first branch in the list without a merged PR. If ALL branches are delivered, do not build — instead run `/plot-deliver <slug>` to formally deliver the plan and check the sprint item.
+5. If the plan has **no branches section** (lightweight plan): treat as single-scope, implement as `feature/<slug>`.
+
+**Implementation sequence** (follows project DoD if present):
+
+1. **Classify** against DoD Compliance Checklist: does this branch need BDD? docs? changeset?
+2. **If BDD required** — write Gherkin scenarios FIRST (red-green discipline). Run tests, confirm they fail.
+3. **Implement** the feature (green phase). Inner TDD loop: unit test → implement → refactor.
+4. **If docs required** — update user/admin guide in the same PR.
+5. **Add changeset** if required.
+6. **Run full test suite.** All tests must pass.
+7. **Create PR** with all artifacts in a single PR.
+
+**NEVER check a sprint item `[x]` in this step.** Only `/plot-deliver` marks sprint items complete — after ALL plan branches are delivered.
 
 ---
 
@@ -151,6 +226,13 @@ Review open PRs that have NO review comments at all. PRs with existing comments 
 - PR status annotation shows `merged`
 
 **For code PRs:** use `/pr-review-toolkit:review-pr`. Post each finding as an individual PR review comment via `gh api`. Be specific and harsh — vague comments waste iterations.
+
+**DoD compliance review** (in addition to code quality):
+If a DoD file exists, check each PR against the DoD Compliance Checklist and post findings as review comments:
+- Missing BDD scenarios → comment: "DoD: Missing BDD scenarios for this feature."
+- Missing docs → comment: "DoD: Missing documentation updates."
+- Missing changeset → comment: "DoD: Missing changeset."
+These become Step 1 work in the next iteration.
 
 **Do NOT fix findings in this step** — post only. Fixing is Step 1 of the next iteration.
 
@@ -224,7 +306,12 @@ Write a one-paragraph summary of what you accomplished this iteration, then outp
 |---------|--------|------------|
 | Running against a sprint in `Phase: Draft` | No items to work on; loop exhausts iterations | Check `Phase:` field in Step 0; output BLOCKED if not started |
 | Outputting BLOCKED after posting review comments | Loop exits; human must restart | BLOCKED only when truly stuck — review comments are normal iteration work |
+| Doing multiple steps in one iteration | Work is unfocused, harder to review, riskier to recover from | ONE step per iteration — the first matching step wins, then exit |
 | Building a new task when unreviewed PRs exist | Step 4 is skipped; review debt accumulates | Step ordering is strict: fix → finalize → build → review |
 | Creating `feature/` branch for plan-only work | Wasted PR, confuses sprint state | Plan-only items commit directly to main |
 | Working in a stale worktree | New sprint items/merged PRs invisible to agent | ralph-sprint.sh now refreshes worktrees before the loop; if running manually, `git worktree remove` first |
 | Declaring BLOCKED with existing RC when new commits exist | RC is stale, needs re-tagging | Step 0 checks for commits after latest RC tag |
+| Checking `[x]` on a sprint item from ralph-plot-sprint | Plan branches left undelivered | NEVER check `[x]` — only `/plot-deliver` marks items complete |
+| Implementing "the whole plan" in one PR | Monolithic PR, misses plan's branch decomposition | Implement ONE branch per iteration — plans decompose for a reason |
+| Merging a PR with DoD gaps | BDD/docs permanently missing from the codebase | Step 2 gates on DoD compliance; Step 4 flags gaps as review comments |
+| Skipping BDD for a non-exempt feature | DoD violation | Classify against DoD exemptions in Step 3 before implementing |
