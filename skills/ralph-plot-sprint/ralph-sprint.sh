@@ -178,20 +178,55 @@ wrapup() {
   if [ ${#SESSION_IDS[@]} -eq 0 ]; then
     return
   fi
-  local id_list
-  id_list=$(printf '%s\n' "${SESSION_IDS[@]}")
+
+  # Build batched session list (5 per batch) for subagent parallelism
+  local batch_num=0
+  local batch_text=""
+  local count=0
+  for idx in "${!SESSION_IDS[@]}"; do
+    if (( count % 5 == 0 )); then
+      batch_num=$(( batch_num + 1 ))
+      local batch_start=$(( count + 1 ))
+      local batch_end=$(( count + 5 ))
+      if (( batch_end > ${#SESSION_IDS[@]} )); then
+        batch_end=${#SESSION_IDS[@]}
+      fi
+      batch_text+="
+Batch $batch_num (iters $batch_start-$batch_end):"
+    fi
+    batch_text+="
+- ${SESSION_IDS[$idx]}"
+    count=$(( count + 1 ))
+  done
+
   echo ""
   echo "=== Wrap-up ==="
-  # shellcheck disable=SC2086
-  $RALPH_SPRINT_CLAUDE -p "/bye
+  # Unset CLAUDECODE to allow nested claude invocation
+  # shellcheck disable=SC2086,SC1007
+  CLAUDECODE= $RALPH_SPRINT_CLAUDE -p "/bye
 You are wrapping up an automated sprint run for sprint '$SLUG'.
 The run completed $i iterations with outcome: $title.
 
-These are the session IDs from each iteration — resume each one
-to read its transcript, then create a single sessionlog summarizing
-the full sprint run:
+## Strategy
 
-$id_list" || true
+Do NOT try to resume or read all session transcripts yourself — they may overflow
+your context. Instead:
+
+1. Launch subagents (Agent tool) to summarize sessions in BATCHES of ~5.
+   Each subagent should read the JSONL transcript files directly:
+   jq 'select(.type == \"assistant\") | .message.content' < file.jsonl
+   For each session: extract the key action (what step, what was built/fixed/reviewed),
+   the outcome, and notable decisions. Return 2-3 line bullet summary per session.
+
+2. After all subagent summaries return, combine into a single sessionlog.
+
+3. Write the sessionlog and commit with message:
+   'sessionlog: $SLUG sprint wrap-up ($i iterations)'
+
+## Session IDs
+
+All stored in the project's .claude/projects/ session directory.
+$batch_text" || true
 }
 
 # --- Main loop ---
