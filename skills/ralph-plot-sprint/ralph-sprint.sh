@@ -18,6 +18,9 @@ NTFY_URL="${CLAUDE_NTFY_URL:?"Set CLAUDE_NTFY_URL (e.g. https://ntfy.sh)"}"
 NTFY_TOKEN="${CLAUDE_NTFY_TOKEN:?"Set CLAUDE_NTFY_TOKEN"}"
 NTFY_TOPIC="${CLAUDE_NTFY_TOPIC:-claude-on-$(hostname -s)}"
 
+# Suppress interactive notification hook — ralph handles its own ntfy
+export CLAUDE_NTFY_SKIP=1
+
 # --- State ---
 
 SESSION_IDS=()
