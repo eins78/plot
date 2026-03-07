@@ -75,10 +75,10 @@ cat docs/definition-of-done.md 2>/dev/null || echo "(no DoD file)"
 | Check | Command | Result |
 |-------|---------|--------|
 | Unchecked items | grep `- [ ]` in sprint file | List or "none" |
-| Plan branch progress | For each unchecked `[slug]` item: read plan file, find heading containing "Branches", cross-reference with `gh pr list --state all` | e.g., "prod-config: 1/7 branches merged" or "no branches section" |
+| Plan branch progress | For each unchecked `[slug]` item: read plan file, find heading containing "Branches" (skip lines with `<!-- deferred: ... -->`), cross-reference with `gh pr list --state all` | e.g., "prod-config: 1/5 branches merged (2 deferred)" or "no branches section" |
 | Open PRs | `gh pr list --state open` | List or "none" |
 | Failing CI | `gh pr checks <n>` per open PR | List or "all green" |
-| Unresolved comments | `gh api ...pulls/<n>/comments` per open PR | List or "none" |
+| Unresolved comments | For each open PR: `gh api repos/{owner}/{repo}/pulls/{N}/comments`. If comments exist, check for agent replies containing "Fixed in" or "Resolved in". Report: "N unresolved (M have fix-claimed replies)" | Count or "none" |
 | DoD compliance | Run DoD Compliance Checklist for each open PR | Gaps or "all compliant" |
 | Missing demos | compare sprint code items to `ls docs/demos/` | List or "all present" |
 | RC tag | `git tag --list 'v*-rc*'` | Tag or "none" |
@@ -100,6 +100,7 @@ Check PR #<N> in repo <owner/repo>:
 
 **After orienting, pick ONE step for this iteration — the first match wins:**
 - If open PRs have failing CI, unresolved comments, **or DoD compliance gaps** → **Step 1 only**
+  - **Refinement:** If ALL unresolved comments have replies from the agent claiming resolution (e.g., "Fixed in `<sha>`"), verify the claimed fix exists in the latest commit before selecting Step 1. If the fix is present in code, treat comments as resolved and skip to Step 2. This avoids wasting an iteration re-verifying known fixes.
 - If open PRs are ready to finalize (green CI, reviewed, no unresolved, **DoD-compliant**) → **Step 2 only**
 - If unchecked sprint items have undelivered plan branches (or no open PR yet) → **Step 3 only**
 - If open code PRs have no review comments → **Step 4 only**
@@ -109,6 +110,8 @@ Check PR #<N> in repo <owner/repo>:
 - Otherwise (no open PRs, no unchecked items, demos present, RC tagged, no post-RC commits) → output BLOCKED (sprint is complete pending human testing)
 
 **CRITICAL: Do exactly ONE step per iteration.** Do not cascade into subsequent steps. Each iteration is cheap — doing less per iteration keeps work focused, reviewable, and recoverable. After completing your one step, write the iteration summary and exit.
+
+**Exception:** If Step 2 merges the LAST branch for a plan (all non-deferred plan branches now have merged PRs), you MAY also run `/plot-deliver <slug>` in the same iteration. This is the only allowed multi-step case — delivery is the natural conclusion of the final merge.
 
 ---
 
@@ -148,6 +151,12 @@ Retry transient failures (network, flaky tests) up to 3 times before marking as 
 *Missing changeset* (`needs_changeset` but no `.changeset/*.md` in PR):
 1. Write `.changeset/<name>.md` with appropriate bump level
 2. Push to the PR branch
+
+**Scope deferral:** If a review finding results in removing functionality that was planned for this branch (e.g., "per-session wiring belongs in a different branch"), you MUST update the plan file on the working branch:
+- In the Branches section, mark the deferred branch with `<!-- deferred: <reason> -->`
+- Example: `- [ ] \`feature/browser-session-windows\` — per-session window creation/cleanup <!-- deferred: descoped from browser-lifecycle PR, needs separate implementation -->`
+
+This ensures `/plot-deliver` can distinguish "intentionally deferred" from "forgotten." Without this annotation, the branch gate in `/plot-deliver` will block delivery.
 
 ---
 
@@ -198,7 +207,9 @@ If work remains in the sprint (unchecked items with undelivered plan branches or
    ```bash
    gh pr list --state all --json headRefName,state --jq '.[] | select(.headRefName | startswith("feature/"))'
    ```
-4. **Pick the NEXT undelivered branch** — the first branch in the list without a merged PR. If ALL branches are delivered, do not build — instead run `/plot-deliver <slug>` to formally deliver the plan and check the sprint item.
+4. **Pick the NEXT undelivered branch** — the first branch in the list without a merged PR (skip branches marked `<!-- deferred: ... -->`).
+   - If ALL non-deferred branches have merged PRs, do not build — instead run `/plot-deliver <slug>` to formally deliver the plan and check the sprint item.
+   - If some branches are deferred AND all non-deferred branches are merged, `/plot-deliver` will handle the verification.
 5. If the plan has **no branches section** (lightweight plan): treat as single-scope, implement as `feature/<slug>`.
 
 **Implementation sequence** (follows project DoD if present):

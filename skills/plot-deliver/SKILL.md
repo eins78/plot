@@ -95,6 +95,22 @@ gh pr view <number> --json state,isDraft --jq '{state: .state, isDraft: .isDraft
   - If user declines, stop and list the unfinished PRs
 - If any are `CLOSED` (not merged): warn — these need manual attention
 
+### 4b. Verify All Plan Branches Accounted For
+
+Re-read the plan's branches section (heading containing "Branches"). For each branch listed (skipping branches marked with `<!-- deferred: ... -->`):
+
+1. Check if a merged PR exists for that branch: `gh pr list --state merged --head <branch-name> --json number`
+2. If no merged PR exists for the exact branch name, check if another merged PR covers that branch's scope (e.g., branches were consolidated into fewer PRs)
+3. If a branch has no merged PR AND no consolidation evidence, it is **unaccounted for**
+
+**If any branches are unaccounted for:**
+- List them with their descriptions from the plan
+- Ask: "These plan branches have no merged PRs. Were they consolidated into other PRs, deferred, or not yet implemented?"
+- If deferred or not implemented: **stop delivery** — "Cannot deliver: N branches have no implementation. Build them first, or update the plan to remove/defer them."
+- If consolidated: user confirms which PR covers the scope, proceed
+
+**This is a hard gate.** Do not proceed to Step 5 if branches are unaccounted for.
+
 ### 5. Verify Plan Completeness
 
 > **Model tiers for this step:**
@@ -163,7 +179,7 @@ git add docs/plans/delivered/<slug>.md docs/plans/YYYY-MM-DD-<slug>.md
 
 **Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file.
 
-**Before checking the box:** re-read the plan's branches section (heading containing "Branches"). For each branch, verify its PR is merged via `gh pr view <N> --json state`. If ANY branch PR is not merged, do NOT check the sprint item — warn and list unmerged branches.
+**Before checking the box:** re-read the plan's branches section (heading containing "Branches"). For each branch (skipping branches marked `<!-- deferred: ... -->`), verify its PR is merged via `gh pr view <N> --json state`. If ANY non-deferred branch PR is not merged, do NOT check the sprint item — warn and list unmerged branches.
 
 When all branches are verified merged, check the box and update annotation:
 
