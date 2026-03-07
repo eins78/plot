@@ -71,8 +71,9 @@ Check PR #<N> in repo <owner/repo>:
 - If open PRs exist → start at Step 1
 - If unchecked sprint items exist (no open PR yet) → go to Step 3
 - If missing demos → go to Step 5
+- If RC tagged but commits exist after latest RC tag (`git log $(git tag -l 'v*-rc*' --sort=-v:refname | head -1)..HEAD --oneline | head -1`) → go to Step 6 (re-tag)
 - If RC not yet tagged → go to Step 6
-- Otherwise (no open PRs, no unchecked items, demos present, RC tagged) → output BLOCKED (sprint is complete pending human testing)
+- Otherwise (no open PRs, no unchecked items, demos present, RC tagged, no post-RC commits) → output BLOCKED (sprint is complete pending human testing)
 
 ---
 
@@ -225,3 +226,5 @@ Write a one-paragraph summary of what you accomplished this iteration, then outp
 | Outputting BLOCKED after posting review comments | Loop exits; human must restart | BLOCKED only when truly stuck — review comments are normal iteration work |
 | Building a new task when unreviewed PRs exist | Step 4 is skipped; review debt accumulates | Step ordering is strict: fix → finalize → build → review |
 | Creating `feature/` branch for plan-only work | Wasted PR, confuses sprint state | Plan-only items commit directly to main |
+| Working in a stale worktree | New sprint items/merged PRs invisible to agent | ralph-sprint.sh now refreshes worktrees before the loop; if running manually, `git worktree remove` first |
+| Declaring BLOCKED with existing RC when new commits exist | RC is stale, needs re-tagging | Step 0 checks for commits after latest RC tag |

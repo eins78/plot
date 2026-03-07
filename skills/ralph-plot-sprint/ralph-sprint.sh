@@ -103,6 +103,16 @@ if ! ls docs/sprints/*-"$SLUG".md &>/dev/null 2>&1; then
   exit 1
 fi
 
+# --- Worktree refresh ---
+# Remove stale worktree so claude --worktree creates a fresh one from current HEAD.
+# Without this, the agent works against an old checkout and can't see new sprint items.
+WORKTREE_NAME="sprint-$SLUG"
+WORKTREE_PATH=".claude/worktrees/$WORKTREE_NAME"
+if [ -d "$WORKTREE_PATH" ]; then
+  echo "Removing stale worktree: $WORKTREE_NAME"
+  git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true
+fi
+
 # --- Agent prompt ---
 
 PROMPT="/$RALPH_SPRINT_SKILL $SLUG
