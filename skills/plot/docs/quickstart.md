@@ -21,7 +21,7 @@ ln -s "$SKILLS_SRC/plot-approve" ~/.claude/skills/plot-approve
 ln -s "$SKILLS_SRC/plot-deliver" ~/.claude/skills/plot-deliver
 ln -s "$SKILLS_SRC/plot-release" ~/.claude/skills/plot-release
 ln -s "$SKILLS_SRC/plot-sprint" ~/.claude/skills/plot-sprint
-ln -s "$SKILLS_SRC/tracer-bullets" ~/.claude/skills/tracer-bullets  # optional sibling
+ln -s "$SKILLS_SRC/tracer-bullets" ~/.claude/skills/tracer-bullets  # recommended sibling
 ```
 
 ## 2. Configure Your Project
