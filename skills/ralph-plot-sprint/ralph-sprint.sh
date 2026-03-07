@@ -218,6 +218,7 @@ $ITER_PROMPT"
     --worktree "sprint-$SLUG" \
     -p "$ITER_PROMPT" \
     --output-format stream-json --verbose \
+    --effort high \
     </dev/null > "$LOGFILE" 2>&1 &
   CHILD_PID=$!
 
