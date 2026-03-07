@@ -38,8 +38,8 @@
 <!--   Proves: <what this validates> -->
 <!--   Status: Not started -->
 
-<!-- Branches to create when approved: -->
-<!-- - `type/name` — description -->
+<!-- When using ### Tracer, wrap remaining branches in ### Implementation: -->
+<!-- ### Implementation -->
 
 - `feature/<slug>` — <description>
 

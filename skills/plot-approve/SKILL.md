@@ -36,12 +36,14 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
 | Steps | Min. Tier | Notes |
 |-------|-----------|-------|
-| 1-3. Parse through Merge | Small | Git/gh commands, helper script, state checks |
+| 1-2. Parse and PR State | Small | Git/gh commands, helper script, state checks |
+| 2b. Suggest Tracer Bullet | Mid | Heuristic evaluation of plan design and branch structure |
+| 3. Merge Plan PR | Small | Single gh command |
 | 4. Read and Parse Plan | Small | Structured markdown parsing |
 | 4b. Branch Conflicts | Mid | Cross-referencing multiple plan files |
 | 5-8. Create Branches through Summary | Small | Git/gh commands, templates |
 
-Nearly all steps are mechanical. Step 4b (branch conflict detection) requires reading multiple plan files and comparing branch lists — mid-tier reasoning.
+Nearly all steps are mechanical. Steps 2b and 4b require mid-tier reasoning — heuristic evaluation and cross-plan comparison respectively.
 
 ### 1. Parse Input
 
