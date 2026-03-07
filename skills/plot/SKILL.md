@@ -184,9 +184,23 @@ See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
 
 Plot works with standalone development strategy skills. These are not plot spokes — they have their own workflows and can be used independently. Plot references them at appropriate moments.
 
-| Skill | When Plot Suggests It |
-|-------|----------------------|
-| `tracer-bullets` | During Draft (validate architecture) or at `/plot-approve` (large feature with uncertainty). Plan template supports `### Tracer` subsection in `## Branches`. |
+### tracer-bullets
+
+Plans can define a `### Tracer` subsection in `## Branches` (see plan template). Format:
+
+```markdown
+### Tracer
+- `feature/<slug>-tracer` — <thin slice description>
+  Layers: <layer> → <layer> → <layer>
+  Proves: <what this validates>
+  Status: Not started | In progress | Complete
+```
+
+**Pre-approval (Draft):** Tracer code lives on the `idea/<slug>` branch alongside plan files. Update `Status:` to `Complete` and add a `## Tracer Results` section with findings. Tracer code carries forward when the plan PR merges.
+
+**Post-approval (Approved):** Create `feature/<slug>-tracer` branch from main. Merge the thin slice before creating remaining implementation branches.
+
+`/plot-approve` step 2b suggests a tracer bullet when uncertainty or feature size warrants it.
 
 ## Troubleshooting
 
