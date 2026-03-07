@@ -75,7 +75,7 @@ cat docs/definition-of-done.md 2>/dev/null || echo "(no DoD file)"
 | Check | Command | Result |
 |-------|---------|--------|
 | Unchecked items | grep `- [ ]` in sprint file | List or "none" |
-| Plan branch progress | For each unchecked `[slug]` item: read plan file, find heading containing "Branches" (skip lines with `<!-- deferred: ... -->`), cross-reference with `gh pr list --state all` | e.g., "prod-config: 1/5 branches merged (2 deferred)" or "no branches section" |
+| Plan branch progress | For each unchecked `[slug]` item: read plan file, find heading containing "Branches" (skip lines with `<!-- deferred: ... -->`), cross-reference with `gh pr list --state all`. Also check sprint item annotation — if `status: rejected`, report as "REJECTED (M/N branches merged, K remaining)" | e.g., "prod-config: 1/5 branches merged (2 deferred)" or "prod-config: REJECTED (2/7 merged, 5 remaining)" or "no branches section" |
 | Open PRs | `gh pr list --state open` | List or "none" |
 | Failing CI | `gh pr checks <n>` per open PR | List or "all green" |
 | Unresolved comments | For each open PR: query review threads via GraphQL `reviewThreads` with `isResolved` field (see Step 1 for query). Count threads where `isResolved == false`. For those, check if the agent already replied claiming a fix ("Fixed in"). Report: "N unresolved (M have fix replies but thread not resolved)" | Count or "none" |
