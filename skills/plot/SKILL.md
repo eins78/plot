@@ -50,12 +50,16 @@ All dispatcher steps are mechanical except the "Overlapping plans" heuristic in 
 flowchart LR
     subgraph Planning
         A["/plot-idea"] -->|draft PR| B["Refine &<br/>slice branches"]
+        B -.->|"optional: tracer-bullets"| B2["Tracer on<br/>idea branch"]
+        B2 --> C
         B -->|"⏳ gh pr ready"| C["Review plan"]
     end
     subgraph Approval
         C -->|"⏳ /plot-approve<br/>(or PR already merged)"| D["Plan merged<br/>impl PRs created"]
     end
     subgraph Implementation
+        D -.->|"optional: tracer-bullets"| D2["Tracer branch<br/>merged first"]
+        D2 -->|"create remaining branches"| E
         D -->|"⚡ create branches"| E["Work on<br/>impl branches"]
         E -->|"⏸ draft → review → merge<br/>(standard code review)"| F["All impls<br/>merged to main"]
     end
@@ -118,7 +122,7 @@ infra/<slug>    →  PR  →  merge
 | Delivered | All impl PRs merged, plan delivered | `/plot-deliver` | ⏸ natural pause (implementation) → ⚡ automate (delivery) |
 | Released | Included in a versioned release | `/plot-release` | ⚡ automate (RC tag) → ⏸ endgame → ⏳ sign-off → ⏳ human-paced (version bump, tag, push) |
 
-The Release phase includes an RC verification loop. Individual plans don't track a "Testing" phase — the release checklist does. See the Pacing section in the manifesto for details.
+The Release phase includes an RC verification loop. Individual plans don't track a "Testing" phase — the release checklist does. The `tracer-bullets` skill can be used during Draft (to validate before approving) or Approved (as first implementation branch) — it is a sibling skill, not a plot phase.
 
 ### Sprint Phases
 
@@ -175,6 +179,28 @@ Natural language overrides are expected and should be honored. Users may say:
 **Rule of thumb:** If it changes per project, it belongs in CLAUDE.md. If it's the same everywhere, it belongs in the skill.
 
 See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
+
+## Sibling Skills
+
+Plot works with standalone development strategy skills. These are not plot spokes — they have their own workflows and can be used independently. Plot references them at appropriate moments.
+
+### tracer-bullets
+
+Plans can define a `### Tracer` subsection in `## Branches` (see plan template). When using `### Tracer`, wrap remaining branches in a `### Implementation` subsection — `/plot-approve` parses only `### Implementation` and skips tracer branches. Format:
+
+```markdown
+### Tracer
+- `feature/<slug>-tracer` — <thin slice description>
+  Layers: <layer> → <layer> → <layer>
+  Proves: <what this validates>
+  Status: Not started | In progress | Complete
+```
+
+**Pre-approval (Draft):** Tracer code lives on the `idea/<slug>` branch alongside plan files. Update `Status:` to `Complete` and add a `## Tracer Results` section with findings. Tracer code carries forward when the plan PR merges.
+
+**Post-approval (Approved):** Create `feature/<slug>-tracer` branch from main. Merge the thin slice before creating remaining implementation branches.
+
+`/plot-approve` step 2b suggests a tracer bullet when uncertainty or feature size warrants it.
 
 ## Troubleshooting
 

@@ -10,7 +10,7 @@ Get started with Plot in 5 minutes.
 
 ## 1. Install the Skills
 
-Symlink all six Plot skills into your Claude Code skills directory:
+Symlink all Plot skills and the recommended sibling skill into your Claude Code skills directory:
 
 ```bash
 SKILLS_SRC=/path/to/skills  # adjust to your clone location
@@ -21,6 +21,7 @@ ln -s "$SKILLS_SRC/plot-approve" ~/.claude/skills/plot-approve
 ln -s "$SKILLS_SRC/plot-deliver" ~/.claude/skills/plot-deliver
 ln -s "$SKILLS_SRC/plot-release" ~/.claude/skills/plot-release
 ln -s "$SKILLS_SRC/plot-sprint" ~/.claude/skills/plot-sprint
+ln -s "$SKILLS_SRC/tracer-bullets" ~/.claude/skills/tracer-bullets  # recommended sibling
 ```
 
 ## 2. Configure Your Project
@@ -57,6 +58,12 @@ Refine the plan, then mark the PR ready for review:
 
 ```bash
 gh pr ready <number>
+```
+
+Before approving, optionally validate the architecture with a tracer bullet (see the `tracer-bullets` skill):
+
+```
+/tracer-bullets
 ```
 
 After review, approve and create implementation branches:
