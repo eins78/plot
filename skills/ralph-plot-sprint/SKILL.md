@@ -78,7 +78,7 @@ cat docs/definition-of-done.md 2>/dev/null || echo "(no DoD file)"
 | Plan branch progress | For each unchecked `[slug]` item: read plan file, find heading containing "Branches" (skip lines with `<!-- deferred: ... -->`), cross-reference with `gh pr list --state all` | e.g., "prod-config: 1/5 branches merged (2 deferred)" or "no branches section" |
 | Open PRs | `gh pr list --state open` | List or "none" |
 | Failing CI | `gh pr checks <n>` per open PR | List or "all green" |
-| Unresolved comments | For each open PR: `gh api repos/{owner}/{repo}/pulls/{N}/comments`. If comments exist, check for agent replies containing "Fixed in" or "Resolved in". Report: "N unresolved (M have fix-claimed replies)" | Count or "none" |
+| Unresolved comments | For each open PR: query review threads via GraphQL `reviewThreads` with `isResolved` field (see Step 1 for query). Count threads where `isResolved == false`. For those, check if the agent already replied claiming a fix ("Fixed in"). Report: "N unresolved (M have fix replies but thread not resolved)" | Count or "none" |
 | DoD compliance | Run DoD Compliance Checklist for each open PR | Gaps or "all compliant" |
 | Missing demos | compare sprint code items to `ls docs/demos/` | List or "all present" |
 | RC tag | `git tag --list 'v*-rc*'` | Tag or "none" |
@@ -100,7 +100,7 @@ Check PR #<N> in repo <owner/repo>:
 
 **After orienting, pick ONE step for this iteration — the first match wins:**
 - If open PRs have failing CI, unresolved comments, **or DoD compliance gaps** → **Step 1 only**
-  - **Refinement:** If ALL unresolved comments have replies from the agent claiming resolution (e.g., "Fixed in `<sha>`"), verify the claimed fix exists in the latest commit before selecting Step 1. If the fix is present in code, treat comments as resolved and skip to Step 2. This avoids wasting an iteration re-verifying known fixes.
+  - **Refinement:** If ALL unresolved threads (`isResolved == false`) already have agent replies claiming a fix (e.g., "Fixed in `<sha>`") but the thread was never formally resolved via GitHub's "Resolve conversation" button/API, verify the fix exists in the latest commit. If it does, resolve the threads via the GraphQL `resolveReviewThread` mutation and skip to Step 2. This avoids wasting an iteration re-verifying known fixes — the thread just needs resolving, not re-fixing.
 - If open PRs are ready to finalize (green CI, reviewed, no unresolved, **DoD-compliant**) → **Step 2 only**
 - If unchecked sprint items have undelivered plan branches (or no open PR yet) → **Step 3 only**
 - If open code PRs have no review comments → **Step 4 only**
@@ -126,11 +126,23 @@ For each open PR with failing CI or unresolved review comments:
 4. Reply to any related review comments explaining the fix
 
 **Unresolved comments:**
-1. `gh api repos/<owner>/pulls/<n>/comments` to list open threads
-2. For each: read the comment, fix the underlying issue in code
+1. Find unresolved review threads using the GraphQL API:
+   ```bash
+   gh api graphql -f query='query { repository(owner: "<owner>", name: "<repo>") {
+     pullRequest(number: <N>) { reviewThreads(first: 50) { nodes {
+       id, isResolved, comments(first: 5) { nodes { body, author { login } } }
+   } } } } }' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)'
+   ```
+2. For each unresolved thread: read the comment, fix the underlying issue in code
 3. Push the fix
-4. Reply to the comment explaining what was done
-5. Resolve the thread: `gh api repos/<owner>/pulls/<n>/comments/<id> --method PATCH -f body="Resolved in <sha>"`
+4. Reply to the comment explaining what was done: `gh api repos/<owner>/<repo>/pulls/<N>/comments --method POST -f body="Fixed in <sha>: <explanation>"`
+5. **Resolve the thread** using the GitHub "Resolve conversation" API (NOT just replying — use the actual resolve mutation):
+   ```bash
+   gh api graphql -f query='mutation { resolveReviewThread(input: {threadId: "<thread-id>"}) {
+     thread { id, isResolved }
+   } }'
+   ```
+   The `threadId` comes from the GraphQL query in step 1. This is equivalent to clicking "Resolve conversation" in the GitHub UI.
 
 Retry transient failures (network, flaky tests) up to 3 times before marking as blocked.
 
