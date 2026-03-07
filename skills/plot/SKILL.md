@@ -421,3 +421,12 @@ Print a clear summary:
 ### Suggested Next Step
 > <specific command or action>
 ```
+
+## Self-Improvement
+
+If you encounter a workflow gap, a broken convention, or missing guidance in any Plot skill (plot, plot-idea, plot-approve, plot-deliver, plot-release, plot-sprint), don't just work around it — fix the skill:
+
+1. **Create a PR** from a fresh worktree of `https://github.com/eins78/skills` on a new branch, fixing the issue directly
+2. **Or file an issue** on `https://github.com/eins78/skills` with: what failed, the actual behavior, and the suggested fix
+
+Never silently work around a skill gap. The fix benefits all future sessions.
