@@ -187,7 +187,6 @@ Plot works with standalone development strategy skills. These are not plot spoke
 | Skill | When Plot Suggests It |
 |-------|----------------------|
 | `tracer-bullets` | During Draft (validate architecture) or at `/plot-approve` (large feature with uncertainty). Plan template supports `### Tracer` subsection in `## Branches`. |
-| `test-driven-development` | During implementation on any branch |
 
 ## Troubleshooting
 

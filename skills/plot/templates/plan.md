@@ -36,6 +36,7 @@
 <!-- - `feature/<slug>-tracer` — <thin slice description> -->
 <!--   Layers: <layer> → <layer> → <layer> -->
 <!--   Proves: <what this validates> -->
+<!--   Status: Not started -->
 
 <!-- Branches to create when approved: -->
 <!-- - `type/name` — description -->

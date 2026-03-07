@@ -60,16 +60,16 @@ Refine the plan, then mark the PR ready for review:
 gh pr ready <number>
 ```
 
+Before approving, optionally validate the architecture with a tracer bullet (see the `tracer-bullets` skill):
+
+```
+/tracer-bullets
+```
+
 After review, approve and create implementation branches:
 
 ```
 /plot-approve my-feature
-```
-
-Optionally, validate the architecture with a tracer bullet first (see the `tracer-bullets` skill):
-
-```
-/tracer-bullets
 ```
 
 Implement on the feature branches, merge PRs, then deliver:
