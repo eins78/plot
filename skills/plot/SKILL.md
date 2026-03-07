@@ -50,12 +50,16 @@ All dispatcher steps are mechanical except the "Overlapping plans" heuristic in 
 flowchart LR
     subgraph Planning
         A["/plot-idea"] -->|draft PR| B["Refine &<br/>slice branches"]
+        B -.->|"optional: tracer-bullets"| B2["Tracer on<br/>idea branch"]
+        B2 --> C
         B -->|"⏳ gh pr ready"| C["Review plan"]
     end
     subgraph Approval
         C -->|"⏳ /plot-approve<br/>(or PR already merged)"| D["Plan merged<br/>impl PRs created"]
     end
     subgraph Implementation
+        D -.->|"optional: tracer-bullets"| D2["Tracer branch<br/>merged first"]
+        D2 -->|"create remaining branches"| E
         D -->|"⚡ create branches"| E["Work on<br/>impl branches"]
         E -->|"⏸ draft → review → merge<br/>(standard code review)"| F["All impls<br/>merged to main"]
     end
@@ -118,7 +122,7 @@ infra/<slug>    →  PR  →  merge
 | Delivered | All impl PRs merged, plan delivered | `/plot-deliver` | ⏸ natural pause (implementation) → ⚡ automate (delivery) |
 | Released | Included in a versioned release | `/plot-release` | ⚡ automate (RC tag) → ⏸ endgame → ⏳ sign-off → ⏳ human-paced (version bump, tag, push) |
 
-The Release phase includes an RC verification loop. Individual plans don't track a "Testing" phase — the release checklist does. See the Pacing section in the manifesto for details.
+The Release phase includes an RC verification loop. Individual plans don't track a "Testing" phase — the release checklist does. The `tracer-bullets` skill can be used during Draft (to validate before approving) or Approved (as first implementation branch) — it is a sibling skill, not a plot phase.
 
 ### Sprint Phases
 
@@ -175,6 +179,15 @@ Natural language overrides are expected and should be honored. Users may say:
 **Rule of thumb:** If it changes per project, it belongs in CLAUDE.md. If it's the same everywhere, it belongs in the skill.
 
 See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
+
+## Sibling Skills
+
+Plot works with standalone development strategy skills. These are not plot spokes — they have their own workflows and can be used independently. Plot references them at appropriate moments.
+
+| Skill | When Plot Suggests It |
+|-------|----------------------|
+| `tracer-bullets` | During Draft (validate architecture) or at `/plot-approve` (large feature with uncertainty). Plan template supports `### Tracer` subsection in `## Branches`. |
+| `test-driven-development` | During implementation on any branch |
 
 ## Troubleshooting
 

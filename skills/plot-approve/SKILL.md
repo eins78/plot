@@ -80,6 +80,22 @@ Handle each case:
 - **Plan PR is closed (not merged)**: Error — "Plan PR is closed. Reopen it or create a new one."
 - **No PR found**: Error — "No PR found for branch `idea/<slug>`. Run `/plot-idea <slug>: <title>` first."
 
+### 2b. Suggest Tracer Bullet (optional)
+
+Before merging, check if a tracer bullet might be valuable. This is a suggestion, never a hard gate.
+
+Read the plan file and check for a `### Tracer` subsection under `## Branches`:
+
+- **If `### Tracer` exists with `Status: Complete`:** proceed normally. Mention in summary: "Tracer bullet validated."
+- **If `### Tracer` exists but incomplete:** warn: "This plan has an incomplete tracer bullet. Consider finishing it with the `tracer-bullets` skill before approving. Proceed anyway?"
+- **If no `### Tracer` subsection:** apply suggestion heuristics:
+  - **Strongly suggest** when the `## Design` section describes unfamiliar technology, experimental approaches, or patterns without established docs/tutorials
+  - **Strongly suggest** when the plan has 3+ branches AND they show a natural core-plus-extras decomposition
+  - If heuristic triggers: "Consider using the `tracer-bullets` skill to validate the architecture first. Add a `### Tracer` subsection to the plan, or proceed without one?"
+  - If heuristic does not trigger: proceed silently
+
+> **Smaller models:** Skip heuristic evaluation. Only check for an existing `### Tracer` subsection. If present and incomplete, warn. Otherwise proceed silently.
+
 ### 3. Merge Plan PR (if open and non-draft)
 
 ```bash
@@ -117,10 +133,15 @@ Example — a valid Branches section:
 
 Parsing rules:
 1. Find the `## Branches` section
-2. For each line starting with `- \``: extract the branch name between backticks, extract the description after ` — `
-3. Skip comment lines (`<!-- ... -->`) and blank lines
-4. If no branches are listed (or section is empty/only has the template comment), error: "No branches listed in the plan. Add branches to the `## Branches` section before approving."
-5. Validate each branch name starts with a known prefix: `feature/`, `bug/`, `docs/`, `infra/`
+2. Check for subsections: `### Tracer` and `### Implementation`
+   - If `### Implementation` exists, parse branches from that subsection only (skip `### Tracer` — tracer branches are managed by the `tracer-bullets` skill)
+   - If no subsections exist, parse branches directly from `## Branches` (original behavior)
+3. For each line starting with `- \``: extract the branch name between backticks, extract the description after ` — `
+4. Skip comment lines (`<!-- ... -->`) and blank lines
+5. If no branches are listed (or section is empty/only has the template comment), error: "No branches listed in the plan. Add branches to the `## Branches` section before approving."
+6. Validate each branch name starts with a known prefix: `feature/`, `bug/`, `docs/`, `infra/`
+
+Note: if a pre-approval tracer was completed on the `idea/<slug>` branch, tracer commits merge to main with the plan PR. Mention in the summary: "Tracer code merged to main with the plan."
 
 ### 4b. Check for Branch Conflicts
 

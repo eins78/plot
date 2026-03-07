@@ -30,6 +30,13 @@
 
 ## Branches
 
+<!-- Optional: define a tracer bullet (thin vertical slice) first. -->
+<!-- See the tracer-bullets skill for guidance. -->
+<!-- ### Tracer -->
+<!-- - `feature/<slug>-tracer` — <thin slice description> -->
+<!--   Layers: <layer> → <layer> → <layer> -->
+<!--   Proves: <what this validates> -->
+
 <!-- Branches to create when approved: -->
 <!-- - `type/name` — description -->
 

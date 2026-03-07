@@ -19,6 +19,8 @@ Plot replaces issue trackers with git-native planning: markdown plan files on br
 | `plot/scripts/plot-pr-state.sh` | Helper: query plan PR state (draft/ready/merged/closed) |
 | `plot/scripts/plot-impl-status.sh` | Helper: query all impl PR states for a slug from plan on main |
 | `plot/changelog.md` | Complete evolution history across 5 development sessions |
+| **Sibling skills** | |
+| `tracer-bullets/SKILL.md` | Thin vertical slice strategy — referenced by `/plot-approve` heuristics and plan template |
 
 ## Tier
 
