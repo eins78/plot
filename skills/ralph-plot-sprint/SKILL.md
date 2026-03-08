@@ -102,16 +102,18 @@ Check PR #<N> in repo <owner/repo>:
 - If open PRs have failing CI, unresolved comments, **or DoD compliance gaps** → **Step 1 only**
   - **Refinement:** If ALL unresolved threads (`isResolved == false`) already have agent replies claiming a fix (e.g., "Fixed in `<sha>`") but the thread was never formally resolved via GitHub's "Resolve conversation" button/API, verify the fix exists in the latest commit. If it does, resolve the threads via the GraphQL `resolveReviewThread` mutation and skip to Step 2. This avoids wasting an iteration re-verifying known fixes — the thread just needs resolving, not re-fixing.
 - If open PRs are ready to finalize (green CI, reviewed, no unresolved, **DoD-compliant**) → **Step 2 only**
-- If unchecked sprint items have undelivered plan branches (or no open PR yet) → **Step 3 only**
 - If open code PRs have no review comments → **Step 4 only**
+- If unchecked sprint items have undelivered plan branches (or no open PR yet), **AND no open PRs exist for this plan** → **Step 3 only**
 - If missing demos for merged features → **Step 5 only**
 - If RC tagged but commits exist after latest RC tag (`git log $(git tag -l 'v*-rc*' --sort=-v:refname | head -1)..HEAD --oneline | head -1`) → **Step 6 only** (re-tag)
 - If RC not yet tagged and all demos present → **Step 6 only**
 - Otherwise (no open PRs, no unchecked items, demos present, RC tagged, no post-RC commits) → output BLOCKED (sprint is complete pending human testing)
 
+**CRITICAL RULE: Finish before starting.** Never start building a new branch (Step 3) when there is an open PR that can be reviewed, fixed, or merged. The gate "no open PRs exist for this plan" enforces this — each branch must complete the full review→fix→merge cycle before the next branch is built.
+
 **CRITICAL: Do exactly ONE step per iteration.** Do not cascade into subsequent steps. Each iteration is cheap — doing less per iteration keeps work focused, reviewable, and recoverable. After completing your one step, write the iteration summary and exit.
 
-**Exception:** If Step 2 merges the LAST branch for a plan (all non-deferred plan branches now have merged PRs), you MAY also run `/plot-deliver <slug>` in the same iteration. This is the only allowed multi-step case — delivery is the natural conclusion of the final merge.
+**Exception:** If Step 2 merges the LAST branch for a plan (all non-deferred plan branches now have merged PRs), you MAY also run `/plot-deliver <slug>` in the same iteration. This is the ONLY allowed multi-step case — delivery is the natural conclusion of the final merge. Do NOT also create demos or tag an RC in the same iteration — those are separate steps.
 
 ---
 
@@ -178,7 +180,7 @@ Finalize PRs that have: green CI + zero unresolved comments + at least one prior
 
 **Do NOT merge any PR with DoD gaps.** If a PR is missing BDD scenarios, documentation, or changesets required by the DoD, it is not ready — route it to Step 1 in the next iteration.
 
-**Order matters:** finalize PRs whose base branch is `main` first. For PRs based on other feature branches, wait until that base branch is merged, then rebase.
+**Merge at most ONE PR per iteration.** If multiple PRs are ready, pick the one based on `main` first. For PRs based on other feature branches, wait until the base branch is merged (a future iteration), then rebase.
 
 ```bash
 # Mark draft → ready
@@ -248,7 +250,11 @@ Review open PRs that have NO review comments at all. PRs with existing comments 
 - PR contains only `docs/plans/` files (plan-only — do a single light factual check instead)
 - PR status annotation shows `merged`
 
-**For code PRs:** use `/pr-review-toolkit:review-pr`. Post each finding as an individual PR review comment via `gh api`. Be specific and harsh — vague comments waste iterations.
+**For code PRs:** use `/pr-review-toolkit:review-pr`. Post each finding as an individual PR review comment via `gh api`.
+
+**CRITICAL: All review findings MUST be posted as GitHub PR comments.** When using parallel subagents for review (e.g., one Task per PR), each subagent MUST post its own findings directly via `gh api` — do NOT rely on subagent return text as the record of findings. The GitHub PR comment thread is the source of truth. If a subagent returns findings as text without posting them to GitHub, post them yourself before ending the iteration.
+
+Be specific and harsh — vague comments waste iterations.
 
 **DoD compliance review** (in addition to code quality):
 If a DoD file exists, check each PR against the DoD Compliance Checklist and post findings as review comments:
@@ -311,9 +317,11 @@ Write a one-paragraph summary of what you accomplished this iteration, then outp
 
 | Signal | When | Loop effect |
 |--------|------|-------------|
+| `<promise>CONTINUE</promise>` | Did useful work, more to do | Loop continues to next iteration |
 | `<promise>COMPLETE</promise>` | All sprint tasks done, all PRs finalized, all demos created, RC tagged | Loop exits, notifies human |
 | `<promise>BLOCKED</promise>` | Truly stuck: unresolvable rebase conflict, RC tagged (awaiting human testing), needs human decision | Loop exits, notifies human |
-| *(no signal)* | Did useful work, more to do | Loop continues to next iteration |
+
+**Every iteration MUST emit exactly one signal.** There is no implicit "continue" — always emit `<promise>CONTINUE</promise>` when work remains.
 
 **Do NOT output BLOCKED just because you posted review comments** — fixing those is the next iteration's job.
 
@@ -330,7 +338,7 @@ Write a one-paragraph summary of what you accomplished this iteration, then outp
 | Running against a sprint in `Phase: Draft` | No items to work on; loop exhausts iterations | Check `Phase:` field in Step 0; output BLOCKED if not started |
 | Outputting BLOCKED after posting review comments | Loop exits; human must restart | BLOCKED only when truly stuck — review comments are normal iteration work |
 | Doing multiple steps in one iteration | Work is unfocused, harder to review, riskier to recover from | ONE step per iteration — the first matching step wins, then exit |
-| Building a new task when unreviewed PRs exist | Step 4 is skipped; review debt accumulates | Step ordering is strict: fix → finalize → build → review |
+| Building a new branch when open PRs exist for same plan | Review/fix/merge debt accumulates; merge conflicts grow | Step 3 is gated: no open PRs for this plan before building next branch |
 | Creating `feature/` branch for plan-only work | Wasted PR, confuses sprint state | Plan-only items commit directly to main |
 | Working in a stale worktree | New sprint items/merged PRs invisible to agent | ralph-sprint.sh now refreshes worktrees before the loop; if running manually, `git worktree remove` first |
 | Declaring BLOCKED with existing RC when new commits exist | RC is stale, needs re-tagging | Step 0 checks for commits after latest RC tag |
@@ -338,3 +346,6 @@ Write a one-paragraph summary of what you accomplished this iteration, then outp
 | Implementing "the whole plan" in one PR | Monolithic PR, misses plan's branch decomposition | Implement ONE branch per iteration — plans decompose for a reason |
 | Merging a PR with DoD gaps | BDD/docs permanently missing from the codebase | Step 2 gates on DoD compliance; Step 4 flags gaps as review comments |
 | Skipping BDD for a non-exempt feature | DoD violation | Classify against DoD exemptions in Step 3 before implementing |
+| Review findings lost in subagent return text | Findings never posted to GitHub; next iteration sees "no comments" | Every subagent MUST post findings via `gh api` directly — never rely on return text |
+| Merging multiple PRs in one iteration | Changes are hard to review; conflicts cascade | Merge at most 1 PR per iteration — each merge deserves its own cycle |
+| No signal emitted at end of iteration | Loop cannot distinguish progress from stuck | Always emit exactly one signal: CONTINUE, COMPLETE, or BLOCKED |

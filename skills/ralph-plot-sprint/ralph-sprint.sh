@@ -294,9 +294,12 @@ $summary" "octagonal_sign"
     wrapup "Sprint Blocked"
     exit 1
 
+  elif [[ "$result" == *"<promise>CONTINUE</promise>"* ]]; then
+    echo "Iteration $i: CONTINUE — proceeding to next iteration."
+
   else
-    # No recognized signal — agent did work but there is more to do. Continue.
-    echo "Iteration $i: no signal detected — continuing."
+    # No recognized signal — warn but continue for backwards compatibility.
+    echo "WARNING: Iteration $i: no signal detected (expected <promise>CONTINUE</promise>). Continuing anyway."
   fi
 done
 
