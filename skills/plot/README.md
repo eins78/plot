@@ -78,7 +78,7 @@ Originated in a private project across 5 Claude Code sessions on 2026-02-07:
 
 Migrated to standalone skills in this repo. Each command (`plot`, `plot-idea`, `plot-approve`, `plot-deliver`, `plot-release`) is its own skill directory with `SKILL.md`. Helper scripts and shared docs live in `plot/`.
 
-See [changelog.md](./changelog.md) for the complete evolution history with commit references.
+See [changelog.md](./changelog.md) for the complete evolution history (commit hashes and PR numbers reference the private originating project, not this repo).
 
 ## Known Gaps
 

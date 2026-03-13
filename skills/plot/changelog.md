@@ -5,7 +5,8 @@ Complete evolution history of the Plot workflow system.
 **Date:** 2026-02-07 (all sessions)
 **Source project:** Private project (Slack bot running Claude Code sessions)
 **Sessions:** 5 Claude Code sessions
-**Key PRs:** #1 (workflow setup), #8 (plot v1), #9/#11/#12 (test-plot v1), #16 (plot v2), #17/#18 (test-plot v2)
+
+> **Note:** All commit hashes, session IDs, and PR numbers below reference the private originating project, not this repository. They are preserved as historical documentation.
 
 ---
 
