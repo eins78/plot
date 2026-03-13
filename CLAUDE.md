@@ -1,68 +1,91 @@
-# Plot Skills Repository
+# Plot
 
-Git-native planning workflow for software development, distributed as [Agent Skills](https://agentskills.io/).
+Git-native planning workflow for software development. Plans are markdown files on branches; git is the source of truth.
 
-Uses the [`skills`](https://www.npmjs.com/package/skills) CLI for validation.
+**Design authority:** [MANIFESTO.md](skills/plot/MANIFESTO.md) — all design decisions must pass its 8-question checklist. When in doubt, the manifesto wins.
 
-## Skill Format
+## Architecture
 
-Each skill lives in its own directory under `skills/` and consists of:
+Plot is a hub-and-spoke skill system:
 
-```
-skills/<skill-name>/
-├── SKILL.md      # The skill itself (frontmatter + instructions)
-└── README.md     # Development documentation (REQUIRED)
-```
+| Role | Skill | Purpose |
+|------|-------|---------|
+| Hub | `plot/` | Dispatcher — reads git state, suggests next action |
+| Command | `plot-idea/` | Create plan: idea branch + plan file + draft PR |
+| Command | `plot-approve/` | Merge plan to main, fan out implementation branches |
+| Command | `plot-deliver/` | Verify all impl PRs merged, deliver the plan |
+| Command | `plot-release/` | Cut versioned release with changelog |
+| Coordination | `plot-sprint/` | Time-boxed sprint with MoSCoW priorities |
+| Automation | `ralph-plot-sprint/` | Automated sprint runner (shell loop wrapper) |
+| Companion | `tracer-bullets` | Thin vertical slice (separate repo: [eins78/skills](https://github.com/eins78/skills)) |
 
-### SKILL.md
+Spoke commands reference helper scripts via relative path: `../plot/scripts/plot-pr-state.sh`.
 
-YAML frontmatter followed by markdown instructions:
+## Helper Scripts
 
-```yaml
----
-name: skill-name
-description: When to activate and what the skill covers.
-globs: []
-license: MIT
----
-```
+Three scripts in `skills/plot/scripts/` provide structured JSON output that any model tier can parse:
 
-The markdown body contains patterns, rules, and examples that Claude follows when the skill is active.
+| Script | Purpose |
+|--------|---------|
+| `plot-pr-state.sh` | Query plan PR state (draft/ready/merged/closed) |
+| `plot-impl-status.sh` | Query all implementation PR states for a slug |
+| `plot-review-status.sh` | Check review freshness for sprint items |
 
-### README.md (required)
+Design split (Manifesto Principle 3): **skills interpret and adapt; scripts collect and report.**
 
-Every skill directory must contain a README.md with development documentation:
+## Model Tiers
 
-- Purpose and scope of the skill
-- How the skill was tested and validated
-- Provenance (where patterns originated)
-- Known gaps and planned improvements
+Every skill includes a `## Model Guidance` table mapping steps to capability tiers:
 
-## Validation
+- **Small (Haiku)** — Mechanical: git commands, template filling, structured output parsing
+- **Mid (Sonnet)** — Heuristic: title similarity, version bump suggestions, discovery with rules
+- **Frontier (Opus)** — Judgment: completeness verification, semantic gap detection, unstructured comparison
+
+Smaller models degrade gracefully — they ask humans where larger models decide autonomously. When changing steps in a skill, update its Model Guidance table.
+
+## Phase Guardrails
+
+Four workflow phases: **Draft → Approved → Delivered → Released**
+
+Each command validates the current phase before acting:
+- Cannot approve an unreviewed draft
+- Cannot deliver with open implementation PRs
+- Cannot release undelivered work
+
+## Project-Agnostic Design
+
+Plot contains zero hardcoded project names, paths, or configuration. Adopting projects describe their conventions in a `## Plot Config` section of their `CLAUDE.md`. Plot discovers and adapts — never enforces.
+
+## Skill Authoring
+
+- Each skill directory: `SKILL.md` (frontmatter + instructions) + `README.md` (dev docs, required)
+- **Use `/writing-skills`** when planning, creating, editing, or reviewing skills
+- Progressive disclosure: overview in SKILL.md, details in referenced files
+- Third person ("Processes files" not "I help you process files")
+- Keep skills generic — no account-specific data
+- Keep the root README.md skills table in sync
+
+## Testing
 
 ```bash
-pnpm test        # runs: skills add . --list
+pnpm test        # validates all skills parse correctly
 ```
 
-This lists all discovered skills and exits non-zero if any skill fails to parse.
+**Behavioral testing is manual.** Plot has no unit tests — validation is via end-to-end lifecycle testing (full workflow from `/plot-idea` through `/plot-release`). Any change to a spoke command or helper script should be tested with a full lifecycle walkthrough. See `skills/plot/README.md` for documented test runs.
 
-## Key Principles
+## Contributing
 
-1. **Be concise** — Only add what Claude doesn't already know
-2. **Progressive disclosure** — Overview in SKILL.md, details in referenced files
-3. **Third person** — "Processes files" not "I help you process files"
-4. **One level deep** — Reference files directly from SKILL.md, avoid nesting
-5. **Use checklists** — Multi-step workflows benefit from copy-paste checklists
-6. **Test across models** — Haiku may need more guidance than Opus
-
-## Adding and Editing Skills
-
-- **Always use `/writing-skills` when planning, creating, editing, or reviewing skills**
-- Keep skills generic — no account-specific data, API keys, or personal identifiers
-- Skills should be self-contained: a single SKILL.md should cover a coherent topic
-- **Keep README.md in sync** — When adding, removing, or renaming skills, update the skills table in the root README.md
-- Continuous improvement: after using a skill, note gaps and propose concrete improvements
+- **Issues:** https://github.com/eins78/plot/issues
+- **Decision criteria:** Does the change pass the [manifesto's 8-question checklist](skills/plot/MANIFESTO.md#making-decisions)?
+- **Known gaps & improvements:** tracked in `skills/plot/README.md`
+- **Evolution history:** `skills/plot/changelog.md`
 
 ## Commit Conventions
 
-Follow the existing commit style: `<skill-name>: <description>` for skill changes, plain descriptions for repo-level changes.
+- `plot: <description>` — hub skill or cross-cutting changes
+- `plot-<command>: <description>` — spoke-specific changes (e.g., `plot-approve: fix branch creation`)
+- Plain description — repo-level files (README, CLAUDE.md, plugin metadata)
+
+## Status
+
+Version 1.0.0-beta.1. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.
