@@ -25,13 +25,14 @@ Currently Plot only adds PRs to a board via `gh pr edit --add-project`. After th
 
 Add `scripts/plot-update-board.sh` to the main plot skill. Each spoke skill adds a one-liner calling this script after its phase transition. The script:
 
-1. Accepts: PR URL/number, target status name, project owner, project number
-2. Looks up the item on the board by PR URL
-3. Finds the Status field and the matching option
-4. Calls `gh project item-edit` to set it
-5. Exits silently (exit 0) if: no board configured, token lacks `project` scope, item not found on board
+1. Accepts: PR URL, target status name, project owner, project number
+2. Adds the PR to the board if not already present (`gh project item-add`)
+3. Looks up the item on the board by PR URL
+4. Finds the Status field and the matching option
+5. Calls `gh project item-edit` to set it
+6. Exits silently (exit 0) if: no board configured, token lacks `project` scope, PR URL invalid
 
-The script is the single source of truth for board interaction. Skills just say "set this PR to this status" — they don't need to know field IDs or GraphQL.
+This **replaces** the old `gh pr edit --add-project` approach entirely. One script handles both adding and status-setting. Skills just say "set this PR to this status" — they don't need to know field IDs, GraphQL, or whether the item is already on the board.
 
 ### Phase-to-Status Mapping
 
@@ -42,7 +43,7 @@ Based on the GitHub Projects "Kanban" board template (adapted):
 | `/plot-idea` | plot-idea | **Planning** | Plan PR (draft) |
 | `/plot-approve` | plot-approve | **Done** | Plan PR (now merged) |
 | `/plot-approve` | plot-approve | **Ready** | New implementation PRs |
-| impl work starts | (manual/agent) | **In Progress** | Implementation PR being worked on |
+| impl work starts | (manual — agent calls script) | **In Progress** | Implementation PR being worked on |
 | `/plot-deliver` | plot-deliver | **Done** | All implementation PRs |
 
 Note: `/plot-release` doesn't need board updates — items are already Done.
@@ -75,9 +76,10 @@ Exit codes:
 ```
 
 Internally:
-1. `gh project item-list <number> --owner <owner> --format json` — find item by PR URL
-2. `gh project field-list <number> --owner <owner> --format json` — find Status field ID + option ID
-3. `gh project item-edit --project-id <id> --id <item-id> --field-id <field-id> --single-select-option-id <option-id>`
+1. `gh project item-add <number> --owner <owner> --url <pr-url>` — add to board (idempotent, no-op if already present)
+2. `gh project item-list <number> --owner <owner> --format json` — find item ID by PR URL
+3. `gh project field-list <number> --owner <owner> --format json` — find Status field ID + option ID
+4. `gh project item-edit --project-id <id> --id <item-id> --field-id <field-id> --single-select-option-id <option-id>` — set status
 
 ### Spoke Skill Changes
 
@@ -96,8 +98,8 @@ If no project board is configured, skip this step.
 ### Open Questions
 
 - [x] Board column names — confirmed from real board: Planning, Ready, In progress, Done
-- [ ] Should the script also handle adding PRs to the board (replacing `gh pr edit --add-project`)? This would consolidate all board logic in one place.
-- [ ] Should "In progress" be set automatically when an agent starts working on an impl branch, or remain manual?
+- [x] **Consolidate add+update:** Yes. The script handles both adding PRs to the board (`gh project item-add`) and setting status in one call. This replaces `gh pr edit --add-project` everywhere, eliminating the old board name config format. One script, one config format (`owner/number`).
+- [x] **"In Progress" handling:** Manual. The agent calls the script when starting work on an impl branch. No new infrastructure (GitHub Actions, hooks). Consistent with Manifesto — board is a convenience, not source of truth. If the agent forgets, items stay in "Ready" until delivered.
 
 ## Branches
 
