@@ -3,7 +3,7 @@ name: plot
 description: >-
   Git-native planning dispatcher. Analyzes current git state and suggests the next action.
   Activates on /plot or when managing planned work through git branches and PRs.
-  Spoke commands: /plot-idea, /plot-approve, /plot-deliver, /plot-release, /plot-sprint.
+  Spoke commands: /plot-idea, /plot-approve, /plot-deliver, /plot-reject, /plot-release, /plot-sprint.
 globs: []
 license: MIT
 metadata:
@@ -65,6 +65,7 @@ flowchart LR
     end
     subgraph Delivery
         F -->|"⚡ /plot-deliver"| G["Plan delivered"]
+        G -.->|"⚡ /plot-reject"| D
     end
     subgraph Release
         G -->|"⚡ /plot-release rc"| H["RC tag +<br/>checklist"]
@@ -120,6 +121,7 @@ infra/<slug>    →  PR  →  merge
 | Draft | Plan being written/refined | `/plot-idea` | ⏸ natural pause (writing) |
 | Approved | Plan merged, impl branches created | `/plot-approve` | ⏳ human-paced (review) → ⚡ automate (branch creation) |
 | Delivered | All impl PRs merged, plan delivered | `/plot-deliver` | ⏸ natural pause (implementation) → ⚡ automate (delivery) |
+| Delivered → Approved | Premature delivery reversed | `/plot-reject` | ⚡ automate |
 | Released | Included in a versioned release | `/plot-release` | ⚡ automate (RC tag) → ⏸ endgame → ⏳ sign-off → ⏳ human-paced (version bump, tag, push) |
 
 The Release phase includes an RC verification loop. Individual plans don't track a "Testing" phase — the release checklist does. The `tracer-bullets` skill can be used during Draft (to validate before approving) or Approved (as first implementation branch) — it is a sibling skill, not a plot phase.
@@ -149,6 +151,7 @@ The Release phase includes an RC verification loop. Individual plans don't track
 - `/plot-approve` requires plan PR to be non-draft or already merged — no approving unreviewed plans
 - `/plot-deliver` requires all impl PRs merged — no premature delivery
 - `/plot-release` requires delivered plans — cannot release undelivered work; verifies readiness but does not execute release steps without user confirmation
+- `/plot-reject` requires plan to be in Delivered phase — cannot reject Draft or Approved plans
 - `/plot` detects orphan impl branches (no approved plan) — prevents coding without context
 - Phase field in plan files is machine-readable — every command checks current phase before acting
 
@@ -238,6 +241,13 @@ Then retry `/plot-approve <slug>`.
 
 If CI is flaky or irrelevant to this PR, the human decides whether to merge anyway.
 
+### Premature delivery (incomplete branches)
+
+`/plot-deliver` was run before all branches were built (e.g., branch verification gate wasn't in place). Options:
+
+1. **Reject** — `/plot-reject <slug>` to move back to Approved, then build remaining branches
+2. **Fix forward** — if the gap is small, build remaining branches and re-deliver without rejecting
+
 ### Delivery check finds incomplete work
 
 `/plot-deliver` reports partial/missing deliverables. Options:
@@ -315,7 +325,7 @@ Each spoke skill appends a `json plot-output` fenced block:
 | `command` | string | Which skill produced this output |
 | `slug` | string | The plan or sprint slug |
 | `phase` | string | Current phase after this action |
-| `status` | string | Result: "created", "approved", "delivered", "released", "error" |
+| `status` | string | Result: "created", "approved", "delivered", "rejected", "released", "error" |
 | `prs` | array? | PR numbers and states |
 | `sprint` | string? | Sprint slug if plan is in a sprint |
 | `next_action` | string | Suggested next command |
@@ -394,7 +404,7 @@ Also run the bash helpers if a specific slug is in context:
 
 **If on `main`:**
 - List all active plans with their phases
-- List any delivered plans awaiting release (from `docs/plans/delivered/`)
+- List any delivered plans awaiting release (from `docs/plans/delivered/`). For each, optionally compare plan branches vs merged PRs — if unbuilt branches exist, suggest `/plot-reject <slug>`
 - List active sprints with countdown and progress: `week-1 — "Ship auth improvements" | 3 days remaining | Must: 2/4 done`. Past end date: show "ended 2 days ago" factually — no warning tone, no nagging.
 - Show overall status summary
 - Suggest next action based on what's pending

@@ -5,8 +5,8 @@ set -e
 # Each iteration invokes claude -p with the skill, reads COMPLETE/BLOCKED signals,
 # and notifies via ntfy when human action is needed.
 #
-# With -p mode, claude buffers text output (no incremental streaming).
-# Each iteration's output appears in full once the agent finishes.
+# Output streaming: Uses --output-format stream-json so iteration logs are
+# written incrementally. Monitor with: tail -f .ralph-state/iter-N.jsonl
 
 # --- Configuration ---
 
@@ -18,18 +18,34 @@ NTFY_URL="${CLAUDE_NTFY_URL:?"Set CLAUDE_NTFY_URL (e.g. https://ntfy.sh)"}"
 NTFY_TOKEN="${CLAUDE_NTFY_TOKEN:?"Set CLAUDE_NTFY_TOKEN"}"
 NTFY_TOPIC="${CLAUDE_NTFY_TOPIC:-claude-on-$(hostname -s)}"
 
+# Suppress interactive notification hook — ralph handles its own ntfy
+export CLAUDE_NTFY_SKIP=1
+
 # --- State ---
 
 SESSION_IDS=()
 i=0
+CHILD_PID=""
 EXITING_NORMALLY=false
+STATE_DIR=".ralph-state"
 
 # --- Signal handling ---
+
+handle_sigint() {
+  echo ""
+  echo "SIGINT received — forwarding to claude (PID $CHILD_PID)..."
+  if [ -n "$CHILD_PID" ] && kill -0 "$CHILD_PID" 2>/dev/null; then
+    kill -INT "$CHILD_PID" 2>/dev/null
+    wait "$CHILD_PID" 2>/dev/null || true
+  fi
+  exit 130
+}
+trap handle_sigint INT
 
 # shellcheck disable=SC2329
 cleanup() {
   local exit_code=$?
-  trap - EXIT
+  trap - EXIT INT
 
   # Skip cleanup on normal exit (already handled by the main flow)
   if [ "$EXITING_NORMALLY" = true ]; then
@@ -63,6 +79,10 @@ if [ -z "$1" ] || [ -z "$2" ]; then
   echo "  CLAUDE_NTFY_URL          ntfy server URL (required)"
   echo "  CLAUDE_NTFY_TOKEN        ntfy auth token (required)"
   echo "  CLAUDE_NTFY_TOPIC        ntfy topic (default: claude-on-\$(hostname -s))"
+  echo ""
+  echo "Monitoring:"
+  echo "  tail -f .ralph-state/iter-N.jsonl        # live stream of current iteration"
+  echo "  jq 'select(.type==\"assistant\")' ...    # filter for agent responses"
   echo ""
   echo "Mid-run steering:"
   echo "  echo 'Focus on demos' > .ralph-state/instructions.md"
@@ -103,6 +123,9 @@ if ! ls docs/sprints/*-"$SLUG".md &>/dev/null 2>&1; then
   exit 1
 fi
 
+# Ensure state directory exists
+mkdir -p "$STATE_DIR"
+
 # --- Worktree refresh ---
 # Remove stale worktree so claude --worktree creates a fresh one from current HEAD.
 # Without this, the agent works against an old checkout and can't see new sprint items.
@@ -132,6 +155,22 @@ notify() {
     "$NTFY_URL/$NTFY_TOPIC" 2>/dev/null || true
 }
 
+# --- Iteration log helpers ---
+
+iter_logfile() {
+  echo "$STATE_DIR/iter-${1}.jsonl"
+}
+
+parse_result() {
+  local logfile="$1"
+  jq -r 'select(.type=="result") | .result // empty' "$logfile" 2>/dev/null || true
+}
+
+parse_session_id() {
+  local logfile="$1"
+  jq -r 'select(.type=="result") | .session_id // empty' "$logfile" 2>/dev/null || true
+}
+
 # --- Wrap-up session ---
 
 wrapup() {
@@ -139,29 +178,65 @@ wrapup() {
   if [ ${#SESSION_IDS[@]} -eq 0 ]; then
     return
   fi
-  local id_list
-  id_list=$(printf '%s\n' "${SESSION_IDS[@]}")
+
+  # Build batched session list (5 per batch) for subagent parallelism
+  local batch_num=0
+  local batch_text=""
+  local count=0
+  for idx in "${!SESSION_IDS[@]}"; do
+    if (( count % 5 == 0 )); then
+      batch_num=$(( batch_num + 1 ))
+      local batch_start=$(( count + 1 ))
+      local batch_end=$(( count + 5 ))
+      if (( batch_end > ${#SESSION_IDS[@]} )); then
+        batch_end=${#SESSION_IDS[@]}
+      fi
+      batch_text+="
+Batch $batch_num (sessions $batch_start-$batch_end):"
+    fi
+    batch_text+="
+- ${SESSION_IDS[$idx]}"
+    count=$(( count + 1 ))
+  done
+
   echo ""
   echo "=== Wrap-up ==="
-  # shellcheck disable=SC2086
-  $RALPH_SPRINT_CLAUDE -p "/bye
+  # Unset CLAUDECODE to allow nested claude invocation
+  # shellcheck disable=SC2086,SC1007
+  CLAUDECODE= $RALPH_SPRINT_CLAUDE -p "/bye
 You are wrapping up an automated sprint run for sprint '$SLUG'.
 The run completed $i iterations with outcome: $title.
 
-These are the session IDs from each iteration — resume each one
-to read its transcript, then create a single sessionlog summarizing
-the full sprint run:
+## Strategy
 
-$id_list" || true
+Do NOT try to resume or read all session transcripts yourself — they may overflow
+your context. Instead:
+
+1. Launch subagents (Agent tool) to summarize sessions in BATCHES of ~5.
+   Each subagent should read the JSONL transcript files directly:
+   jq 'select(.type == \"assistant\") | .message.content' < file.jsonl
+   For each session: extract the key action (what step, what was built/fixed/reviewed),
+   the outcome, and notable decisions. Return 2-3 line bullet summary per session.
+
+2. After all subagent summaries return, combine into a single sessionlog.
+
+3. Write the sessionlog and commit with message:
+   'sessionlog: $SLUG sprint wrap-up ($i iterations)'
+
+## Session IDs
+
+All stored in the project's .claude/projects/ session directory.
+$batch_text" || true
 }
 
 # --- Main loop ---
 
 for ((i=1; i<=ITERATIONS; i++)); do
-  echo "=== Iteration $i/$ITERATIONS ==="
+  LOGFILE=$(iter_logfile "$i")
+  echo "=== Iteration $i/$ITERATIONS === (log: $LOGFILE)"
 
   # --- Instruction injection ---
-  INSTRUCTIONS_FILE=".ralph-state/instructions.md"
+  INSTRUCTIONS_FILE="$STATE_DIR/instructions.md"
   ITER_PROMPT="$PROMPT"
   if [ -f "$INSTRUCTIONS_FILE" ]; then
     EXTRA_INSTRUCTIONS=$(cat "$INSTRUCTIONS_FILE")
@@ -174,11 +249,23 @@ $EXTRA_INSTRUCTIONS
 $ITER_PROMPT"
   fi
 
+  # Run claude with stream-json for incremental log output.
+  # The log file can be tailed live: tail -f .ralph-state/iter-N.jsonl
   # shellcheck disable=SC2086
-  json_result=$(timeout "$RALPH_SPRINT_TIMEOUT" $RALPH_SPRINT_CLAUDE --worktree "sprint-$SLUG" -p "$ITER_PROMPT" --output-format json </dev/null) || json_result=""
+  timeout "$RALPH_SPRINT_TIMEOUT" $RALPH_SPRINT_CLAUDE \
+    --worktree "sprint-$SLUG" \
+    -p "$ITER_PROMPT" \
+    --output-format stream-json --verbose \
+    --effort high \
+    </dev/null > "$LOGFILE" 2>"$STATE_DIR/iter-${i}.stderr" &
+  CHILD_PID=$!
 
-  result=$(echo "$json_result" | jq -r '.result // empty' 2>/dev/null) || result=""
-  session_id=$(echo "$json_result" | jq -r '.session_id // empty' 2>/dev/null) || session_id=""
+  # Wait for the child — captures exit code without set -e killing us
+  wait "$CHILD_PID" || true
+  CHILD_PID=""
+
+  result=$(parse_result "$LOGFILE")
+  session_id=$(parse_session_id "$LOGFILE")
 
   if [ -n "$session_id" ]; then
     SESSION_IDS+=("$session_id")
@@ -207,9 +294,12 @@ $summary" "octagonal_sign"
     wrapup "Sprint Blocked"
     exit 1
 
+  elif [[ "$result" == *"<promise>CONTINUE</promise>"* ]]; then
+    echo "Iteration $i: CONTINUE — proceeding to next iteration."
+
   else
-    # No recognized signal — agent did work but there is more to do. Continue.
-    echo "Iteration $i: no signal detected — continuing."
+    # No recognized signal — warn but continue for backwards compatibility.
+    echo "WARNING: Iteration $i: no signal detected (expected <promise>CONTINUE</promise>). Continuing anyway."
   fi
 done
 

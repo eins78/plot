@@ -67,7 +67,7 @@ Resolve the symlink to find the actual plan file path (e.g., `docs/plans/YYYY-MM
 
 ### 3. Read and Parse Plan
 
-Read the plan file (resolved from the `active/` symlink) and parse the `## Branches` section for PR references. If the plan has a `Sprint: <name>` field in its Status section, extract it for the summary.
+Read the plan file (resolved from the `active/` symlink) and find the section headed with "Branches" (matches `## Branches`, `## Implementation Branches`, `### Implementation Branches`, or any heading containing the word "Branches"). Parse it for PR references. If the plan has a `Sprint: <name>` field in its Status section, extract it for the summary.
 
 Expected format after `/plot-approve`:
 ```markdown
@@ -94,6 +94,26 @@ gh pr view <number> --json state,isDraft --jq '{state: .state, isDraft: .isDraft
   - List all remaining open PRs and ask the user: "These PRs are still open. Merge them first, or deliver anyway?"
   - If user declines, stop and list the unfinished PRs
 - If any are `CLOSED` (not merged): warn — these need manual attention
+
+### 4b. Verify All Plan Branches Accounted For
+
+Re-read the plan's branches section (heading containing "Branches"). For each branch listed (skipping branches marked with a deferred annotation):
+
+**Deferred annotation format:** `<!-- deferred: <reason> -->` — must begin with exactly `<!-- deferred:` (case-sensitive, with colon and space). Appears at end of a branch line. Branches without this exact prefix are NOT considered deferred.
+
+For each non-deferred branch:
+
+1. Check if a merged PR exists for that branch: `gh pr list --state merged --head <branch-name> --json number`
+2. If no merged PR exists for the exact branch name, check if another merged PR covers that branch's scope (e.g., branches were consolidated into fewer PRs)
+3. If a branch has no merged PR AND no consolidation evidence, it is **unaccounted for**
+
+**If any branches are unaccounted for:**
+- List them with their descriptions from the plan
+- Ask: "These plan branches have no merged PRs. Were they consolidated into other PRs, deferred, or not yet implemented?"
+- If deferred or not implemented: **stop delivery** — "Cannot deliver: N branches have no implementation. Build them first, or update the plan to remove/defer them."
+- If consolidated: user confirms which PR covers the scope, proceed
+
+**This is a hard gate.** Do not proceed to Step 5 if branches are unaccounted for.
 
 ### 5. Verify Plan Completeness
 
@@ -161,10 +181,14 @@ ln -s ../YYYY-MM-DD-<slug>.md docs/plans/delivered/<slug>.md
 git add docs/plans/delivered/<slug>.md docs/plans/YYYY-MM-DD-<slug>.md
 ```
 
-**Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file, check the box, and update the annotation:
+**Update sprint file** (if the plan has a `Sprint:` field): find the `[<slug>]` item in the sprint file.
+
+**Before checking the box:** re-read the plan's branches section (heading containing "Branches"). For each branch (skipping branches marked `<!-- deferred: ... -->`), verify its PR is merged via `gh pr view <N> --json state`. If ANY non-deferred branch PR is not merged, do NOT check the sprint item — warn and list unmerged branches.
+
+When all branches are verified merged, check the box and update annotation:
 
 ```markdown
-- [x] [slug] description <!-- pr: #<number>, status: merged -->
+- [x] [slug] description <!-- status: delivered, pr: #<primary>, branches: N/N -->
 ```
 
 ```bash
