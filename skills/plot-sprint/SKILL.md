@@ -139,7 +139,7 @@ Plan-backed items carry HTML comment annotations for automation tracking:
 | Field | Set by | Values |
 |-------|--------|--------|
 | `pr` | `/plot-approve` | PR number (`#N`) or `none` |
-| `status` | `/plot-approve`, `/plot-deliver` | `not-started`, `draft`, `open`, `merged` |
+| `status` | `/plot-approve`, `/plot-deliver`, `/plot-reject` | `not-started`, `draft`, `open`, `merged`, `delivered`, `rejected` |
 | `branch` | `/plot-approve` | Implementation branch name |
 | `reviewed_at` | Review tracking | ISO 8601 timestamp |
 | `review_sha` | Review tracking | HEAD SHA at time of review |

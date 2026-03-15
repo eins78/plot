@@ -97,7 +97,11 @@ gh pr view <number> --json state,isDraft --jq '{state: .state, isDraft: .isDraft
 
 ### 4b. Verify All Plan Branches Accounted For
 
-Re-read the plan's branches section (heading containing "Branches"). For each branch listed (skipping branches marked with `<!-- deferred: ... -->`):
+Re-read the plan's branches section (heading containing "Branches"). For each branch listed (skipping branches marked with a deferred annotation):
+
+**Deferred annotation format:** `<!-- deferred: <reason> -->` — must begin with exactly `<!-- deferred:` (case-sensitive, with colon and space). Appears at end of a branch line. Branches without this exact prefix are NOT considered deferred.
+
+For each non-deferred branch:
 
 1. Check if a merged PR exists for that branch: `gh pr list --state merged --head <branch-name> --json number`
 2. If no merged PR exists for the exact branch name, check if another merged PR covers that branch's scope (e.g., branches were consolidated into fewer PRs)

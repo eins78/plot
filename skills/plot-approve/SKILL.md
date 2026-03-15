@@ -137,10 +137,13 @@ Example — a valid Branches section:
 
 Parsing rules:
 1. Find the section headed with "Branches" (matches `## Branches`, `## Implementation Branches`, `### Implementation Branches`, or any heading containing the word "Branches")
-2. For each line starting with `- \``: extract the branch name between backticks, extract the description after ` — `
-3. Skip comment lines (`<!-- ... -->`) and blank lines
-4. If no branches are listed (or section is empty/only has the template comment), error: "No branches listed in the plan. Add branches to the `## Branches` section before approving."
-5. Validate each branch name starts with a known prefix: `feature/`, `bug/`, `docs/`, `infra/`
+2. Check for subsections: `### Tracer` and `### Implementation`
+   - If `### Implementation` exists, parse branches from that subsection only (skip `### Tracer` — tracer branches are managed by the `tracer-bullets` skill)
+   - If no subsections exist, parse branches directly from the matched section
+3. For each line starting with `- \``: extract the branch name between backticks, extract the description after ` — `
+4. Skip comment lines (`<!-- ... -->`) and blank lines
+5. If no branches are listed (or section is empty/only has the template comment), error: "No branches listed in the plan. Add branches to the `## Branches` section before approving."
+6. Validate each branch name starts with a known prefix: `feature/`, `bug/`, `docs/`, `infra/`
 
 ### 4b. Check for Branch Conflicts
 

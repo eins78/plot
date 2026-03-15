@@ -192,7 +192,7 @@ wrapup() {
         batch_end=${#SESSION_IDS[@]}
       fi
       batch_text+="
-Batch $batch_num (iters $batch_start-$batch_end):"
+Batch $batch_num (sessions $batch_start-$batch_end):"
     fi
     batch_text+="
 - ${SESSION_IDS[$idx]}"
@@ -257,7 +257,7 @@ $ITER_PROMPT"
     -p "$ITER_PROMPT" \
     --output-format stream-json --verbose \
     --effort high \
-    </dev/null > "$LOGFILE" 2>&1 &
+    </dev/null > "$LOGFILE" 2>"$STATE_DIR/iter-${i}.stderr" &
   CHILD_PID=$!
 
   # Wait for the child — captures exit code without set -e killing us
