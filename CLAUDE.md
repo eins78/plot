@@ -83,6 +83,22 @@ pnpm test        # validates all skills parse correctly
 - **Known gaps & improvements:** tracked in `skills/plot/README.md`
 - **Evolution history:** `skills/plot/changelog.md`
 
+## Versioning
+
+Every skill MUST have a `metadata.version` field in its SKILL.md frontmatter.
+
+**When a skill is changed, increment its version** (semver):
+
+- **Patch** (`x.y.Z`): bug fixes, wording improvements, minor clarifications
+- **Minor** (`x.Y.0`): new sections, new patterns, expanded coverage
+- **Major** (`X.0.0`): structural reorganization, removed sections, breaking workflow changes
+
+**When any skill version is bumped, bump the plugin version** in all 3 metadata files (`package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`):
+
+- Skill patch → plugin patch (at minimum)
+- Skill minor → plugin minor (at minimum)
+- Skill major → plugin major
+
 ## Commit Conventions
 
 - `plot: <description>` — hub skill or cross-cutting changes
