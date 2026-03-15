@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.2
+  version: 1.0.0-beta.3
 compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
@@ -28,7 +28,8 @@ Example: `/plot-deliver sse-backpressure`
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
     ## Plot Config
-    - **Project board:** <your-project-name> (#<number>)  <!-- optional, for `gh pr edit --add-project` -->
+    <!-- Optional: uncomment if using a GitHub Projects board -->
+    <!-- - **Project board:** owner/number (e.g. eins78/5) -->
     - **Branch prefixes:** idea/, feature/, bug/, docs/, infra/
     - **Plan directory:** docs/plans/
     - **Active index:** docs/plans/active/
@@ -41,7 +42,8 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 | 1-4. Parse through Verify PRs | Small | Git/gh commands, helper script, state checks |
 | 5. Verify Completeness | Frontier (orchestrator) + Small (subagents) | Orchestrator extracts deliverables and consolidates; small subagents gather PR diffs in parallel |
 | 6. Release Note Check | Small | File existence checks |
-| 7-8. Deliver and Summary | Small | File ops, git commands, template |
+| 7-8. Deliver and Board Status | Small | File ops, git commands, board sync |
+| 9. Summary | Small | Template formatting |
 
 Step 5 is the prime example of subagent delegation: a frontier orchestrator handles the judgment (extracting deliverables, consolidating Done/Partial/Missing), while small subagents handle the data collection (running `gh pr diff`, reading PR metadata) in parallel. Without subagents, the frontier model does everything sequentially.
 
@@ -201,7 +203,19 @@ git push origin plot/deliver-<slug>:main
 
 (Replace `YYYY-MM-DD-<slug>.md` with the actual date-prefixed filename from the resolved symlink.)
 
-### 8. Summary
+### 8. Update Board Status
+
+If `## Plot Config` includes a project board (`owner/number`), update all implementation PRs to "Done":
+
+For each merged implementation PR from the Branches section:
+
+```bash
+../plot/scripts/plot-update-board.sh <impl-pr-url> "Done" <owner> <number>
+```
+
+If no project board is configured, skip this step.
+
+### 9. Summary
 
 Print:
 - Delivered: `<slug>`

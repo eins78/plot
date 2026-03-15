@@ -11,8 +11,9 @@ Copy this into your project's `CLAUDE.md` and fill in the values.
 - **Active index:** docs/plans/active/
 - **Delivered index:** docs/plans/delivered/
 - **Sprint directory:** docs/sprints/
-<!-- Optional: uncomment if using a GitHub project board -->
-<!-- - **Project board:** my-project (#1) -->
+<!-- Optional: uncomment if using a GitHub Projects board -->
+<!-- - **Project board:** owner/number (e.g. eins78/5) -->
+<!-- Note: disable GitHub Projects' built-in "PR merged → Done" and "Item added → Todo" automations if using Plot's board sync -->
 
 ## Plot Rules
 

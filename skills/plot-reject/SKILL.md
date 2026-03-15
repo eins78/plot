@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.2
+  version: 1.0.0-beta.3
 compatibility: Designed for Claude Code. Requires git and gh CLI.
 ---
 
@@ -26,7 +26,8 @@ Example: `/plot-reject prod-config "5/7 branches unbuilt"`
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
     ## Plot Config
-    - **Project board:** <your-project-name> (#<number>)  <!-- optional, for `gh pr edit --add-project` -->
+    <!-- Optional: uncomment if using a GitHub Projects board -->
+    <!-- - **Project board:** owner/number (e.g. eins78/5) -->
     - **Branch prefixes:** idea/, feature/, bug/, docs/, infra/
     - **Plan directory:** docs/plans/
     - **Active index:** docs/plans/active/
