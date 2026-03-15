@@ -23,7 +23,7 @@ Spoke commands reference helper scripts via relative path: `../plot/scripts/plot
 
 ## Helper Scripts
 
-Four scripts in `skills/plot/scripts/` provide structured JSON output that any model tier can parse:
+Scripts in `skills/plot/scripts/` that any model tier can use:
 
 | Script | Purpose |
 |--------|---------|

@@ -46,8 +46,8 @@ if [ -z "$FIELD_ID" ] || [ -z "$OPTIONS_JSON" ]; then
     exit 0
   }
 
-  FIELD_ID=$(echo "$FIELDS_JSON" | jq -r '.fields[] | select(.name == "Status") | .id')
-  OPTIONS_JSON=$(echo "$FIELDS_JSON" | jq -c '.fields[] | select(.name == "Status") | .options')
+  FIELD_ID=$(echo "$FIELDS_JSON" | jq -r '.fields[] | select(.name == "Status") | .id' 2>/dev/null || true)
+  OPTIONS_JSON=$(echo "$FIELDS_JSON" | jq -c '.fields[] | select(.name == "Status") | .options' 2>/dev/null || true)
 
   if [ -z "$FIELD_ID" ]; then
     echo "Warning: No Status field found in project ${OWNER}/${PROJECT_NUMBER}" >&2
@@ -63,7 +63,7 @@ if [ -z "$FIELD_ID" ] || [ -z "$OPTIONS_JSON" ]; then
 fi
 
 # Step 4: Find option ID for target status
-OPTION_ID=$(echo "$OPTIONS_JSON" | jq -r --arg status "$STATUS" '.[] | select(.name == $status) | .id')
+OPTION_ID=$(echo "$OPTIONS_JSON" | jq -r --arg status "$STATUS" '.[] | select(.name == $status) | .id' 2>/dev/null || true)
 
 if [ -z "$OPTION_ID" ]; then
   echo "Warning: Status option '${STATUS}' not found in project ${OWNER}/${PROJECT_NUMBER}" >&2

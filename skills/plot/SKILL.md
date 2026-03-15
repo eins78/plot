@@ -189,7 +189,7 @@ Natural language overrides are expected and should be honored. Users may say:
 | Workflow steps & lifecycle | Yes | No |
 | Branch naming conventions | Yes (defaults) | Override if different |
 | Directory paths | No | Yes (`docs/plans/`, etc.) |
-| Project board name | No | Yes |
+| Project board (`owner/number`) | No | Yes |
 | Merge strategy preference | No | Yes |
 | Release note tooling | No | Yes (or auto-detected) |
 | Sprint cadence / dates | No | Yes (or in sprint file) |
