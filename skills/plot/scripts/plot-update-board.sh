@@ -11,7 +11,12 @@ STATUS="${2:?Usage: plot-update-board.sh <pr-url> <status> <owner> <project-numb
 OWNER="${3:?Usage: plot-update-board.sh <pr-url> <status> <owner> <project-number>}"
 PROJECT_NUMBER="${4:?Usage: plot-update-board.sh <pr-url> <status> <owner> <project-number>}"
 
-CACHE_FILE="/tmp/plot-board-cache-${OWNER}-${PROJECT_NUMBER}.json"
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || GIT_DIR=""
+if [ -n "$GIT_DIR" ]; then
+  CACHE_FILE="${GIT_DIR}/plot-board-cache-${OWNER}-${PROJECT_NUMBER}.json"
+else
+  CACHE_FILE="/tmp/plot-board-cache-${OWNER}-${PROJECT_NUMBER}.json"
+fi
 
 # --- Load or fetch project metadata (project ID, Status field ID, options) ---
 
@@ -54,12 +59,13 @@ if [ -z "$FIELD_ID" ] || [ -z "$OPTIONS_JSON" ]; then
     exit 0
   fi
 
-  # Cache project metadata for bulk operations
+  # Cache project metadata for bulk operations (atomic write)
   jq -n \
     --arg projectId "$PROJECT_ID" \
     --arg fieldId "$FIELD_ID" \
     --argjson options "$OPTIONS_JSON" \
-    '{projectId: $projectId, fieldId: $fieldId, options: $options}' > "$CACHE_FILE"
+    '{projectId: $projectId, fieldId: $fieldId, options: $options}' > "$CACHE_FILE.tmp.$$" \
+    && mv "$CACHE_FILE.tmp.$$" "$CACHE_FILE"
 fi
 
 # Step 4: Find option ID for target status
