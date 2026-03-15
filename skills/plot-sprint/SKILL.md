@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.1
+  version: 1.0.0-beta.2
 compatibility: Designed for Claude Code and Cursor. Requires git. Sprint files are committed directly to main — no PR workflow.
 ---
 
@@ -56,6 +56,8 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 | Close | Mid | Checkbox parsing + reading plan files to check delivery status of `[slug]` refs |
 
 All sprint operations are structural (Small or Mid). No Frontier needed.
+
+> **User interaction:** Use `AskUserQuestion` (Claude Code) / `ask_question` (Cursor) for all questions, proposals, and confirmations.
 
 ## Sprint Lifecycle
 

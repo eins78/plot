@@ -63,6 +63,7 @@ Plot contains zero hardcoded project names, paths, or configuration. Adopting pr
 - Progressive disclosure: overview in SKILL.md, details in referenced files
 - Third person ("Processes files" not "I help you process files")
 - Keep skills generic — no account-specific data
+- When skills say "ask the user", use `AskUserQuestion` (Claude Code) / `ask_question` (Cursor)
 - Keep the root README.md skills table in sync
 
 ## Testing
@@ -107,4 +108,4 @@ Every skill MUST have a `metadata.version` field in its SKILL.md frontmatter.
 
 ## Status
 
-Version 1.0.0-beta.1. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.
+Version 1.0.0-beta.2. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.
