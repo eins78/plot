@@ -59,7 +59,7 @@ The `## Plot Config` template and `claude-md-snippet.md` need updating:
 
 The format changes from `<name> (#<number>)` to `<owner>/<number>` because `gh project` commands need owner + number, not the board name. This is a breaking change — existing adopters must update their `## Plot Config` section.
 
-**GitHub automations note:** Users should disable GitHub Projects' built-in "Pull request merged → Done" automation if using Plot's board sync. GitHub can't distinguish plan PRs from impl PRs, so the built-in rule would incorrectly set plan PRs to "Done" on merge (Plot sets them to "Done" explicitly, and sets impl PRs to "Ready").
+**GitHub automations note:** Users should disable GitHub Projects' built-in "Pull request merged → Done" and "Item added to project → Todo" automations if using Plot's board sync. The "merged → Done" rule conflicts with implementation PRs: Plot sets new impl PRs to "Ready" on creation, but the built-in rule would override that to "Done" when they're eventually merged (before Plot's `/plot-deliver` runs). The "added → Todo" rule would override Plot's initial status assignment (e.g., "Planning" for plan PRs, "Ready" for impl PRs).
 
 ### Script Design: `plot-update-board.sh`
 
@@ -82,6 +82,8 @@ Internally:
 2. `gh project item-add <number> --owner <owner> --url <pr-url> --format json --jq '.id'` — add to board (idempotent) and capture item ID
 3. `gh project field-list <number> --owner <owner> --format json` — find Status field ID + matching option ID for the target status
 4. `gh project item-edit --project-id <project-node-id> --id <item-id> --field-id <field-id> --single-select-option-id <option-id>` — set status
+
+**Performance note:** Steps 1 and 3 fetch project metadata that doesn't change between calls. When `/plot-approve` creates multiple impl branches, it calls the script in a loop — redundantly fetching the same metadata each time. The script may cache project node ID and field IDs in a temp file (e.g., `/tmp/plot-board-cache-<owner>-<number>.json`) to avoid repeated API calls during bulk operations.
 
 ### Spoke Skill Changes
 
