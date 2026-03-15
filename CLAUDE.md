@@ -23,13 +23,14 @@ Spoke commands reference helper scripts via relative path: `../plot/scripts/plot
 
 ## Helper Scripts
 
-Three scripts in `skills/plot/scripts/` provide structured JSON output that any model tier can parse:
+Scripts in `skills/plot/scripts/` that any model tier can use:
 
 | Script | Purpose |
 |--------|---------|
 | `plot-pr-state.sh` | Query plan PR state (draft/ready/merged/closed) |
 | `plot-impl-status.sh` | Query all implementation PR states for a slug |
 | `plot-review-status.sh` | Check review freshness for sprint items |
+| `plot-update-board.sh` | Update GitHub Projects board status for a PR |
 
 Design split (Manifesto Principle 3): **skills interpret and adapt; scripts collect and report.**
 
@@ -108,4 +109,4 @@ Every skill MUST have a `metadata.version` field in its SKILL.md frontmatter.
 
 ## Status
 
-Version 1.0.0-beta.2. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.
+Version 1.0.0-beta.3. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.

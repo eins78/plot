@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.2
+  version: 1.0.0-beta.3
 compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
@@ -26,7 +26,8 @@ Example: `/plot-idea sse-backpressure: Handle SSE client disconnects gracefully`
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
     ## Plot Config
-    - **Project board:** <your-project-name> (#<number>)  <!-- optional, for `gh pr edit --add-project` -->
+    <!-- Optional: uncomment if using a GitHub Projects board -->
+    <!-- - **Project board:** owner/number (e.g. eins78/5) -->
     - **Branch prefixes:** idea/, feature/, bug/, docs/, infra/
     - **Plan directory:** docs/plans/
     - **Active index:** docs/plans/active/
@@ -38,7 +39,8 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 |-------|-----------|-------|
 | 1. Parse Input | Small | String parsing |
 | 2. Pre-flight Checks | Small (hard gate), Mid (soft warning) | Slug collision is mechanical; title similarity needs mid-tier |
-| 3-8. Create Branch through Summary | Small | Git/gh commands, templates, file ops |
+| 3-7. Create Branch through Board Status | Small | Git/gh commands, templates, file ops |
+| 8. Summary | Small | Template formatting |
 
 The entire skill is small-model capable except the soft duplicate warning (title similarity in step 2).
 
@@ -141,12 +143,12 @@ EOF
 )"
 ```
 
-### 7. Add to Project Board
+### 7. Update Board Status
 
-Read the `## Plot Config` section from `CLAUDE.md` for the project board name. If configured:
+If `## Plot Config` includes a project board (`owner/number`), update the plan PR status:
 
 ```bash
-gh pr edit <number> --add-project "<project board name>"
+../plot/scripts/plot-update-board.sh <pr-url> "Planning" <owner> <number>
 ```
 
 If no project board is configured, skip this step.

@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.2
+  version: 1.0.0-beta.3
 compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
@@ -26,7 +26,8 @@ Example: `/plot-approve sse-backpressure`
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
     ## Plot Config
-    - **Project board:** <your-project-name> (#<number>)  <!-- optional, for `gh pr edit --add-project` -->
+    <!-- Optional: uncomment if using a GitHub Projects board -->
+    <!-- - **Project board:** owner/number (e.g. eins78/5) -->
     - **Branch prefixes:** idea/, feature/, bug/, docs/, infra/
     - **Plan directory:** docs/plans/
     - **Active index:** docs/plans/active/
@@ -41,7 +42,7 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 | 3. Merge Plan PR | Small | Single gh command |
 | 4. Read and Parse Plan | Small | Structured markdown parsing |
 | 4b. Branch Conflicts | Mid | Cross-referencing multiple plan files |
-| 5-8. Create Branches through Summary | Small | Git/gh commands, templates |
+| 5-8. Create Branches through Summary | Small | Git/gh commands, templates, board sync |
 
 Nearly all steps are mechanical. Steps 2b and 4b require mid-tier reasoning — heuristic evaluation and cross-plan comparison respectively.
 
@@ -109,6 +110,12 @@ gh pr merge <number> --merge --delete-branch
 This lands the plan file on main and deletes the `idea/<slug>` branch.
 
 Default to **merge commits** to preserve granular commit history (plan refinement steps are valuable context). If the project's `CLAUDE.md` specifies a different merge strategy, follow that instead.
+
+If `## Plot Config` includes a project board (`owner/number`), update the plan PR status to "Done":
+
+```bash
+../plot/scripts/plot-update-board.sh <plan-pr-url> "Done" <owner> <number>
+```
 
 ### 4. Read and Parse Plan
 
@@ -211,10 +218,10 @@ EOF
 
 (Replace `YYYY-MM-DD` with the actual date prefix from the plan filename.)
 
-Read the `## Plot Config` section from `CLAUDE.md` for the project board name. If configured:
+If `## Plot Config` includes a project board (`owner/number`), add the new impl PR and set status to "Ready":
 
 ```bash
-gh pr edit <number> --add-project "<project board name>"
+../plot/scripts/plot-update-board.sh <impl-pr-url> "Ready" <owner> <number>
 ```
 
 Collect all created PR numbers and URLs.
