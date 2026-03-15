@@ -9,7 +9,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.1
+  version: 1.0.0-beta.2
 compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
@@ -145,6 +145,7 @@ The Release phase includes an RC verification loop. Individual plans don't track
 - **Impl PRs:** draft, created by `/plot-approve`, reference the plan on main
 - **Sprint files:** `docs/sprints/YYYY-Www-<slug>.md` — ISO week-prefixed, committed directly to main
 - **Sprint active index:** `docs/sprints/active/<slug>.md` — symlinks to active sprints
+- **User questions:** When a step says "ask", "propose", "warn and confirm", or "list and ask", use the `AskUserQuestion` tool (Claude Code) or `ask_question` (Cursor). This ensures the agent pauses for a real answer instead of continuing with assumptions.
 
 ## Guardrails
 

@@ -63,6 +63,7 @@ Plot contains zero hardcoded project names, paths, or configuration. Adopting pr
 - Progressive disclosure: overview in SKILL.md, details in referenced files
 - Third person ("Processes files" not "I help you process files")
 - Keep skills generic — no account-specific data
+- When skills say "ask the user", use `AskUserQuestion` (Claude Code) / `ask_question` (Cursor)
 - Keep the root README.md skills table in sync
 
 ## Testing

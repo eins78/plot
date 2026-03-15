@@ -9,9 +9,11 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.1
+  version: 1.0.0-beta.2
 compatibility: Designed for Claude Code. Requires git and gh CLI.
 ---
+
+> **User interaction:** Use `AskUserQuestion` (Claude Code) / `ask_question` (Cursor) for all questions, proposals, and confirmations.
 
 # ralph-plot-sprint
 

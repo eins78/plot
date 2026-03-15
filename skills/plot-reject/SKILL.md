@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.1
+  version: 1.0.0-beta.2
 compatibility: Designed for Claude Code. Requires git and gh CLI.
 ---
 
@@ -39,6 +39,8 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 | All (1-8) | Small | Git/gh commands, file edits — no judgment calls |
 
 All steps are mechanical: parse input, check state, move files, update metadata.
+
+> **User interaction:** Use `AskUserQuestion` (Claude Code) / `ask_question` (Cursor) for all questions, proposals, and confirmations.
 
 ### 1. Parse Input
 

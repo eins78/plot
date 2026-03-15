@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.1
+  version: 1.0.0-beta.2
 compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses gh CLI for forge operations, but the workflow works with any git host that supports pull request review.
 ---
 
@@ -41,6 +41,8 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 | 3-8. Create Branch through Summary | Small | Git/gh commands, templates, file ops |
 
 The entire skill is small-model capable except the soft duplicate warning (title similarity in step 2).
+
+> **User interaction:** Use `AskUserQuestion` (Claude Code) / `ask_question` (Cursor) for all questions, proposals, and confirmations.
 
 ### 1. Parse Input
 
