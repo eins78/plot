@@ -82,6 +82,8 @@ The plans are still independent after approval — `/plot-approve` processes eac
 
 ### 3. Create Branch
 
+Create a new branch from `origin/main` — this is worktree-safe (does not check out main):
+
 ```bash
 git fetch origin main
 git checkout -b idea/<slug> origin/main

@@ -68,8 +68,11 @@ Plot contains zero hardcoded project names, paths, or configuration. Adopting pr
 ## Testing
 
 ```bash
+pnpm install     # install dependencies first if node_modules is missing
 pnpm test        # validates all skills parse correctly
 ```
+
+**Always install dependencies and run tests.** If `pnpm test` fails due to missing `node_modules`, install them and retry — never skip tests or dismiss the failure.
 
 **Behavioral testing is manual.** Plot has no unit tests — validation is via end-to-end lifecycle testing (full workflow from `/plot-idea` through `/plot-release`). Any change to a spoke command or helper script should be tested with a full lifecycle walkthrough. See `skills/plot/README.md` for documented test runs.
 

@@ -144,8 +144,11 @@ Skip this step entirely for docs/infra plans (they don't need release notes).
 
 The plan file stays in place — only the symlink moves from `active/` to `delivered/`.
 
+Do **not** check out main locally (see Branch Safety in the hub skill). Use a disposable branch:
+
 ```bash
-git checkout main && git pull origin main
+git fetch origin main
+git checkout -b plot/deliver-<slug> origin/main
 
 # Update Phase field in the plan file
 # Change **Phase:** Approved → **Phase:** Delivered
@@ -167,7 +170,7 @@ git add docs/plans/delivered/<slug>.md docs/plans/YYYY-MM-DD-<slug>.md
 ```bash
 git add docs/sprints/
 git commit -m "plot: deliver <slug>"
-git push
+git push origin plot/deliver-<slug>:main
 ```
 
 (Replace `YYYY-MM-DD-<slug>.md` with the actual date-prefixed filename from the resolved symlink.)
