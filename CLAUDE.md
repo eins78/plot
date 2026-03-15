@@ -108,4 +108,4 @@ Every skill MUST have a `metadata.version` field in its SKILL.md frontmatter.
 
 ## Status
 
-Version 1.0.0-beta.1. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.
+Version 1.0.0-beta.2. Experimental, evolving through real-world usage. Originated 2026-02-07 across 5 Claude Code sessions in a private project; migrated to this standalone repo 2026-03-13.
