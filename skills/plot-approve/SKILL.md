@@ -110,14 +110,16 @@ Default to **merge commits** to preserve granular commit history (plan refinemen
 
 ### 4. Read and Parse Plan
 
-Pull main to get the (just-merged or previously-merged) plan:
+Fetch main to get the (just-merged or previously-merged) plan — do **not** check out main locally (see Branch Safety in the hub skill):
 
 ```bash
-git checkout main
-git pull origin main
+git fetch origin main
+# Read the plan file directly from origin/main
+git show origin/main:docs/plans/active/<slug>.md   # resolve symlink target
+git show origin/main:docs/plans/YYYY-MM-DD-<slug>.md  # read plan content
 ```
 
-Find the plan file: `ls docs/plans/active/<slug>.md` resolves to the date-prefixed file (e.g., `docs/plans/YYYY-MM-DD-<slug>.md`). Read it and parse the `## Branches` section. If the plan has a `Sprint: <name>` field in its Status section, note the sprint membership for the summary. Expected format:
+Find the plan file: the `active/<slug>.md` symlink resolves to the date-prefixed file (e.g., `docs/plans/YYYY-MM-DD-<slug>.md`). Read it and parse the `## Branches` section. If the plan has a `Sprint: <name>` field in its Status section, note the sprint membership for the summary. Expected format:
 
 ```markdown
 - `type/name` — description
@@ -267,10 +269,11 @@ After:
 If the plan spawns multiple branches, annotate the item with the first (primary) PR.
 
 ```bash
-git checkout main
+git fetch origin main
+git checkout -b plot/link-prs-<slug> origin/main
 git add docs/plans/YYYY-MM-DD-<slug>.md docs/sprints/
 git commit -m "plot: link implementation PRs for <slug>"
-git push
+git push origin plot/link-prs-<slug>:main
 ```
 
 ### 8. Summary
@@ -284,6 +287,5 @@ Print:
 - If the plan has a Sprint field: "Part of sprint `<sprint-name>`."
 - Progress: `[ ] Draft > [x] Approved > [ ] Delivered > [ ] Released`
 - Suggested next actions:
-  1. Check out a branch and start implementing: `git checkout <type>/<name>`
+  1. Start implementing on a branch (use a worktree for parallel work: `claude --worktree`)
   2. When implementation is done: `/plot-deliver <slug>`
-  - _Alternative:_ work on multiple branches in parallel using worktrees

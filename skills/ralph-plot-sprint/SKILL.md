@@ -113,7 +113,7 @@ gh pr merge <n> --squash
 
 # After merging a base-branch PR, rebase PRs that depended on it:
 git fetch origin
-git checkout <dependent-branch>
+git checkout -b <dependent-branch> origin/<dependent-branch>
 git rebase origin/main
 git push --force-with-lease
 ```

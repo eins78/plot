@@ -152,6 +152,19 @@ The Release phase includes an RC verification loop. Individual plans don't track
 - `/plot` detects orphan impl branches (no approved plan) — prevents coding without context
 - Phase field in plan files is machine-readable — every command checks current phase before acting
 
+## Branch Safety (Worktree Compatibility)
+
+**Never check out `main` locally.** All plot commands run on topic branches. This is essential for worktree-based workflows (e.g. `claude --worktree`) where `main` is already checked out in the primary working tree, but it's good practice everywhere.
+
+| Instead of | Do this |
+|------------|---------|
+| `git checkout main` | `git checkout -b plot/<action> origin/main` (disposable branch) |
+| Reading files from main | `git fetch origin main` then `git show origin/main:<path>` |
+| Pushing updates to main | `git push origin <branch>:main` (direct push) or create+merge a PR |
+| Switching to an existing branch | You're likely already on it in a worktree; otherwise `git checkout -b <name> origin/<name>` |
+
+This applies to all spoke commands. `git checkout -b <new-branch> origin/main` is fine — it creates a new branch without checking out main.
+
 ## Flexibility
 
 Natural language overrides are expected and should be honored. Users may say:
@@ -206,10 +219,9 @@ Plans can define a `### Tracer` subsection in `## Branches` (see plan template).
 
 ### Plan PR has merge conflicts
 
-The `idea/<slug>` branch has diverged from main.
+The `idea/<slug>` branch has diverged from main. You should already be on this branch (or in a worktree for it).
 
 ```bash
-git checkout idea/<slug>
 git fetch origin main
 git rebase origin/main
 # Resolve conflicts
@@ -239,11 +251,12 @@ If CI is flaky or irrelevant to this PR, the human decides whether to merge anyw
 If the Phase field doesn't match reality (e.g., plan says "Draft" but PR is merged):
 
 ```bash
-git checkout main && git pull
+git fetch origin main
+git checkout -b plot/fix-phase-<slug> origin/main
 # Fix the Phase field in docs/plans/YYYY-MM-DD-<slug>.md
 git add docs/plans/YYYY-MM-DD-<slug>.md
 git commit -m "plot: fix phase for <slug>"
-git push
+git push origin plot/fix-phase-<slug>:main
 ```
 
 ### Orphan implementation branch
