@@ -4,8 +4,14 @@
 
 ## Status
 
-- **Phase:** Draft
+- **Phase:** Approved
 - **Type:** feature
+
+## Approval
+
+- **Approved:** 2026-03-15T21:02:30Z
+- **Approved by:** eins78
+- **Assignee:** eins78
 
 ## Changelog
 
@@ -111,7 +117,7 @@ If no project board is configured, skip this step.
 
 ## Branches
 
-- `feature/board-sync` — Add `plot-update-board.sh` script, update spoke skills with board sync references, update config template
+- `feature/board-sync` — Add `plot-update-board.sh` script, update spoke skills with board sync references, update config template → #8
 
 ## Notes
 
