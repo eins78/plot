@@ -26,11 +26,11 @@ Currently Plot only adds PRs to a board via `gh pr edit --add-project`. After th
 Add `scripts/plot-update-board.sh` to the main plot skill. Each spoke skill adds a one-liner calling this script after its phase transition. The script:
 
 1. Accepts: PR URL, target status name, project owner, project number
-2. Adds the PR to the board if not already present (`gh project item-add`)
-3. Looks up the item on the board by PR URL
-4. Finds the Status field and the matching option
-5. Calls `gh project item-edit` to set it
-6. Exits silently (exit 0) if: no board configured, token lacks `project` scope, PR URL invalid
+2. Resolves the project's GraphQL node ID (`gh project view`)
+3. Adds the PR to the board and captures the item ID (`gh project item-add` — idempotent)
+4. Finds the Status field and the matching option (`gh project field-list`)
+5. Calls `gh project item-edit` to set the status
+6. Exits silently (exit 0) if: no board configured, token lacks `project` scope, PR URL invalid. Emits a warning to stderr on unexpected errors (e.g., project not found) so agents can log issues without blocking the workflow.
 
 This **replaces** the old `gh pr edit --add-project` approach entirely. One script handles both adding and status-setting. Skills just say "set this PR to this status" — they don't need to know field IDs, GraphQL, or whether the item is already on the board.
 
@@ -46,7 +46,7 @@ Based on the GitHub Projects "Kanban" board template (adapted):
 | impl work starts | (manual — agent calls script) | **In Progress** | Implementation PR being worked on |
 | `/plot-deliver` | plot-deliver | **Done** | All implementation PRs |
 
-Note: `/plot-release` doesn't need board updates — items are already Done.
+Note: `/plot-release` and `/plot-reject` don't need board updates. Release items are already Done. Rejection moves a plan from Delivered back to Approved — the impl PRs stay on the board in their current status (typically Done or Ready), which is correct since they may need further work.
 
 ### Config Changes
 
@@ -57,7 +57,9 @@ The `## Plot Config` template and `claude-md-snippet.md` need updating:
 <!-- - **Project board:** owner/number (e.g. eins78/5) -->
 ```
 
-The format changes from `<name> (#<number>)` to `<owner>/<number>` because `gh project` commands need owner + number, not the board name.
+The format changes from `<name> (#<number>)` to `<owner>/<number>` because `gh project` commands need owner + number, not the board name. This is a breaking change — existing adopters must update their `## Plot Config` section.
+
+**GitHub automations note:** Users should disable GitHub Projects' built-in "Pull request merged → Done" automation if using Plot's board sync. GitHub can't distinguish plan PRs from impl PRs, so the built-in rule would incorrectly set plan PRs to "Done" on merge (Plot sets them to "Done" explicitly, and sets impl PRs to "Ready").
 
 ### Script Design: `plot-update-board.sh`
 
@@ -76,14 +78,18 @@ Exit codes:
 ```
 
 Internally:
-1. `gh project item-add <number> --owner <owner> --url <pr-url>` — add to board (idempotent, no-op if already present)
-2. `gh project item-list <number> --owner <owner> --format json` — find item ID by PR URL
-3. `gh project field-list <number> --owner <owner> --format json` — find Status field ID + option ID
-4. `gh project item-edit --project-id <id> --id <item-id> --field-id <field-id> --single-select-option-id <option-id>` — set status
+1. `gh project view <number> --owner <owner> --format json --jq '.id'` — resolve project GraphQL node ID (needed by `item-edit`)
+2. `gh project item-add <number> --owner <owner> --url <pr-url> --format json --jq '.id'` — add to board (idempotent) and capture item ID
+3. `gh project field-list <number> --owner <owner> --format json` — find Status field ID + matching option ID for the target status
+4. `gh project item-edit --project-id <project-node-id> --id <item-id> --field-id <field-id> --single-select-option-id <option-id>` — set status
 
 ### Spoke Skill Changes
 
-Each spoke adds a short section referencing the script. Example for plot-idea:
+Each spoke adds a short "Update Board Status" step referencing the script, and **removes** the existing `gh pr edit --add-project` steps (plot-idea step 7, plot-approve step 5). The new script replaces that approach entirely.
+
+Each spoke's `## Model Guidance` table should include the new step as **Small** tier (it's a single shell command).
+
+Example for plot-idea:
 
 ```markdown
 ### N. Update Board Status
