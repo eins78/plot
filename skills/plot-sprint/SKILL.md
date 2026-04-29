@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.3
+  version: 1.0.0-beta.4
 compatibility: Designed for Claude Code and Cursor. Requires git. Sprint files are committed directly to main — no PR workflow.
 ---
 
@@ -72,9 +72,15 @@ flowchart LR
 
 Legend: ⚡ automate ASAP · ⏸ natural pause · ⏳ human-paced
 
-## Guardrail
+## Guardrails
+
+### Plan vs Sprint
 
 Sprint files must not contain `## Design` or `## Approach` sections. If detected, warn: "This looks like a plan, not a sprint. Use `/plot-idea` for plans."
+
+### Phase Transitions
+
+The `Phase` field is only updated by named subcommands: `commit`, `start`, `close`. Any other action — opening a PR for review, refining items, adjusting dates, fixing typos — leaves the phase unchanged. If the user says "start a PR for the sprint", that means open a draft PR for plan review, not `/plot-sprint <slug> start`. When in doubt, ask which subcommand the user means.
 
 ## Subcommands
 
@@ -92,6 +98,8 @@ Extract `<slug>` (before the colon) and `<goal>` (after the colon). Both are req
 - Goal: the sprint goal as a sentence
 
 If no colon or missing parts: "Usage: `/plot-sprint <slug>: <goal>`"
+
+**Multiline input:** If `$ARGUMENTS` contains newlines, the first line is parsed for slug + goal as above. Any subsequent lines are treated as **context for the goal** (e.g., motivation, scope hints) and become the body of the `## Sprint Goal` section in the new sprint file — not the one-line `> <sprint goal>` headline.
 
 #### 2. Determine ISO Week Prefix
 
