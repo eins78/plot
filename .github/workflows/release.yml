@@ -2,32 +2,61 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'pnpm'
+          node-version: 20
+          cache: pnpm
+
       - run: pnpm install --frozen-lockfile
-      - name: Create Release Pull Request or Tag
+
+      - name: Compute next release version
+        id: nextver
+        run: |
+          # Predict the next package version from pending changesets so the
+          # release PR title and commit message can include the actual version
+          # (e.g. "release: 1.1.0") instead of a generic "chore: release".
+          npx changeset status --output=/tmp/changeset-status.json \
+            || echo '{"releases":[]}' > /tmp/changeset-status.json
+          NEXT=$(jq -r '.releases[] | select(.name=="plot") | .newVersion' \
+            /tmp/changeset-status.json | head -n1)
+          NEXT="${NEXT:-pending}"
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEXT"
+
+      - name: Create Release PR or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
-          version: pnpm changeset version
-          publish: pnpm changeset tag
-          title: 'Version Packages'
-          commit: 'Version Packages'
+          version: pnpm run version
+          publish: bash .dev/scripts/create-release.sh
+          commit: "release: ${{ steps.nextver.outputs.version }}"
+          title: "release: ${{ steps.nextver.outputs.version }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assign release PR
+        if: steps.changesets.outputs.pullRequestNumber
+        env:
+          PR_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr edit "$PR_NUMBER" --add-assignee eins78
