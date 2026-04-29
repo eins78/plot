@@ -8,13 +8,13 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.3
-compatibility: Designed for Claude Code and Cursor. Requires git. Sprint files are committed directly to main — no PR workflow.
+  version: 1.0.0-beta.4
+compatibility: Designed for Claude Code and Cursor. Requires git. Sprint skeletons commit directly to main; planning refinement may optionally go through a draft PR (see "Refine via PR").
 ---
 
 # Plot: Sprint
 
-Sprints are **not plans**. Plans track *what* to build; sprints track *when* to ship it. Sprint files live in `docs/sprints/`, committed directly to main — no PR, no review gate. Principle 2 ("Plans merge before implementation") does not apply to sprints.
+Sprints are **not plans**. Plans track *what* to build; sprints track *when* to ship it. Sprint files live in `docs/sprints/`. The initial skeleton commits directly to main; subsequent Planning-phase refinement may optionally happen on a `sprint/<slug>` branch with a draft PR for review. Principle 2 ("Plans merge before implementation") does not apply to sprints — sprints don't spawn implementation branches — but the *refinement* benefits from the same review surface.
 
 **Input:** `$ARGUMENTS` determines the subcommand.
 
@@ -171,15 +171,17 @@ For each plan-backed item (`[slug]`) added in step 4, update the referenced plan
 
 This enables sprint awareness in `/plot-approve` and `/plot-deliver`.
 
-#### 7. Commit to Main
+#### 7. Commit Skeleton to Main
 
-Sprint files are committed directly to main (include any updated plan files):
+Commit the initial sprint skeleton directly to main:
 
 ```bash
 git add docs/sprints/${WEEK_PREFIX}-<slug>.md docs/plans/
 git commit -m "sprint: create <slug>"
 git push
 ```
+
+Refinement (fleshing out items, readiness assessments, deferrals) happens optionally on a `sprint/<slug>` branch with a draft PR — see "Refine via PR (optional)" below.
 
 #### 8. Summary
 
@@ -188,6 +190,26 @@ Print:
 - Sprint: `[*] Planning > [ ] Committed > [ ] Active > [ ] Closed`
 - Plan files updated: N (if any)
 - Next: add items, set dates, then `/plot-sprint <slug> commit` when ready
+
+---
+
+### Refine via PR (optional)
+
+Once the skeleton is on main, sprint refinement can move to a `sprint/<slug>` feature branch with a draft PR. This is optional — small or solo sprints can stay on main. Use a PR when:
+
+- Multiple stakeholders need to review scope before locking
+- Readiness assessments or deferral decisions deserve their own commits in history
+- The sprint is large enough that scope conversations benefit from inline comments
+
+**Phase stays `Planning` throughout the PR.** The `commit` subcommand handles the phase bump and merge atomically (see Commit subcommand below).
+
+Workflow:
+
+1. `git checkout -b sprint/<slug> origin/main`
+2. Refine the sprint file on the branch (one commit per substantive change — readiness, defer X, set dates)
+3. `gh pr create --draft --title "Sprint: <goal>" --body "..."` — keep as draft while in Planning phase
+4. Phase stays `Planning` throughout. Do NOT change the phase here.
+5. When the team agrees: run `/plot-sprint <slug> commit` (see Commit subcommand for PR-aware behavior).
 
 ---
 
@@ -214,13 +236,40 @@ Check that the `**End:**` field has a real date (not the placeholder `YYYY-MM-DD
 
 If missing or placeholder: "Set an end date before committing. Edit the sprint file directly."
 
-#### 3. Update Phase
+#### 3. Detect Sprint PR
 
-Change `**Phase:** Planning` → `**Phase:** Committed`
+Run `gh pr list --head sprint/<slug> --json number,state,isDraft --jq '.[]'`.
 
-#### 4. Commit
+- **PR exists and not merged:** proceed to step 4a (PR-aware commit)
+- **No PR / PR already merged:** proceed to step 4b (direct main commit)
+
+#### 4a. PR-Aware Commit
+
+Update phase **on the PR branch**, push, mark ready, merge:
 
 ```bash
+# Should already be on sprint/<slug> branch — confirm with: git branch --show-current
+# If not, check it out worktree-safe: git checkout -b sprint/<slug> origin/sprint/<slug>
+
+# Bump phase in the sprint file
+# **Phase:** Planning → **Phase:** Committed
+git add docs/sprints/*-<slug>.md
+git commit -m "sprint: commit <slug>"
+git push
+
+gh pr ready <number>          # if currently draft
+gh pr merge <number> --merge --delete-branch
+```
+
+Default to **merge commits** (`--merge`) to preserve granular planning history (readiness, deferrals, scope changes are valuable context). If the project's `CLAUDE.md` specifies a different merge strategy, follow that instead. Do NOT default to `--squash` — it collapses the planning trail.
+
+The merge itself is the "scope locked" transition. No follow-up commit on main needed.
+
+#### 4b. Direct Main Commit (no PR)
+
+```bash
+# Bump phase in the sprint file
+# **Phase:** Planning → **Phase:** Committed
 git add docs/sprints/*-<slug>.md
 git commit -m "sprint: commit <slug>"
 git push
@@ -398,3 +447,11 @@ Read the sprint file and display:
 
 - `<slug>` — "<goal>" | [*] Active | 3 days remaining | Must: 2/4 | Should: 1/2 | Could: 0/1
 ```
+
+---
+
+## Common Mistakes
+
+| Mistake | Effect | Prevention |
+|---------|--------|------------|
+| Squash-merging a sprint planning PR | Readiness/defer/dates collapse into one commit; reasoning lost | Default to `--merge` (matches `plot-approve` for plan PRs) — squash is for messy WIP, not planning |
