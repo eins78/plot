@@ -8,7 +8,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/plot
-  version: 1.0.0-beta.3
+  version: 1.0.0-beta.4
 compatibility: Designed for Claude Code and Cursor. Requires git. Sprint files are committed directly to main — no PR workflow.
 ---
 
@@ -53,8 +53,9 @@ Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:
 
 | Steps | Min. Tier | Notes |
 |-------|-----------|-------|
-| Create, commit, start, status | Small | Git commands, templates, file ops |
-| Close | Mid | Checkbox parsing + reading plan files to check delivery status of `[slug]` refs |
+| Create, commit, start | Small | Git commands, templates, file ops |
+| Status | Small | File existence checks for delivery state are mechanical; no judgment needed |
+| Close | Mid | False-positive detection (cross-reference `[x]` against `docs/plans/delivered/`) plus existing checkbox parsing |
 
 All sprint operations are structural (Small or Mid). No Frontier needed.
 
@@ -292,15 +293,28 @@ Find sprint file, check Phase is `Active`.
 Parse the sprint file for checkbox items in each tier:
 
 - Count checked `- [x]` vs unchecked `- [ ]` items per tier
-- For plan-backed items (`[slug]`), check if the referenced plan is delivered (exists in `docs/plans/delivered/`)
+- **For each `[x]` item with a `[slug]` reference, verify the plan is actually delivered:**
+  - Check `docs/plans/delivered/<slug>.md` (file or symlink) exists
+  - If the plan is in `docs/plans/active/<slug>.md` or missing entirely, this is a **false-positive completion**
 
-Present results:
+Present results, listing any false positives **before** the totals:
 
 ```
-Must Have:  2/4 complete
+⚠ False-positive completions detected:
+  - [slug] — checked but plan is in active/ (not delivered)
+  - [slug] — checked but plan file not found
+
+Must Have:  2/4 complete (1 false positive)
 Should Have: 1/2 complete
 Could Have:  0/1 complete
 ```
+
+**If false positives exist, do NOT proceed to close until the user resolves them.** Present three options:
+1. **Run `/plot-deliver <slug>`** for each false-positive item (preferred — actually delivers the plan)
+2. **Uncheck the box** in the sprint file (acknowledges it's not really done)
+3. **Override and close anyway** (last resort) — requires logging a one-liner reason in the sprint file's `## Notes > ### Scope Changes` section, mirroring the existing scope-change log convention. Format: `- YYYY-MM-DD: Closed with [slug] marked complete despite plan not delivered — <reason>`
+
+After false positives are resolved, continue with the regular Must-Have completeness flow:
 
 If must-haves are incomplete, present three options:
 1. Close anyway (must-haves stay unchecked in place)
@@ -390,6 +404,7 @@ Read the sprint file and display:
 - Time remaining (days until end date; "ended N days ago" if past)
 - MoSCoW progress: Must N/M, Should N/M, Could N/M
 - For plan-backed items with annotations: show PR number, status, and branch
+- **False-positive flag:** for `[x]` items with `[slug]` refs, if the plan is not in `docs/plans/delivered/`, prefix the line with `⚠ ` and note `(plan not delivered)`. This makes the discrepancy visible during routine status checks, not just at close time.
 
 #### 3. Summary
 
@@ -398,3 +413,11 @@ Read the sprint file and display:
 
 - `<slug>` — "<goal>" | [*] Active | 3 days remaining | Must: 2/4 | Should: 1/2 | Could: 0/1
 ```
+
+---
+
+## Common Mistakes
+
+| Mistake | Effect | Prevention |
+|---------|--------|------------|
+| Closing a sprint with `[x] [slug]` items whose plans are still in `active/` | Sprint reads as complete but plans remain undelivered; `/plot-deliver` later reverts the plan to Draft | Step 2 of close runs a false-positive check; resolve via `/plot-deliver` or uncheck before closing |
