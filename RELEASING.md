@@ -10,22 +10,16 @@ Releases are driven by [changesets](https://github.com/changesets/changesets).
 4. **Tag** — run `pnpm changeset tag` (creates a git tag matching `package.json` version).
 5. **Push** tag to origin — triggers the GitHub Actions release workflow (`.github/workflows/release.yml`), which publishes to npm and creates a GitHub release.
 
-## Downstream: plot-marketplace
+## Same-repo coupling: keeping plugin/marketplace versions in sync
 
-> **TODO for the maintainer — needs a decision before the first stable release.**
+Plot ships its plugin manifest at `.claude-plugin/plugin.json` and its marketplace registry entry at `.claude-plugin/marketplace.json` (registry name: `plot-marketplace`). **There is no separate `eins78/plot-marketplace` repository** — both files live in this repo, identical structural pattern to `eins78/agent-skills` (registry name: `eins78-marketplace`).
 
-`eins78/plot-marketplace` is the marketplace counterpart that lists the plot plugin for users to discover and install it.
+**The gap:** `pnpm changeset version` only updates `package.json` and `CHANGELOG.md`. It does **not** touch `.claude-plugin/plugin.json` or `.claude-plugin/marketplace.json` — neither out of the box nor via the current `.changeset/config.json`. All three files are at `1.0.0-beta.4` today only because they were manually aligned. On the next `changeset version` run, `package.json` will move forward and the two `.claude-plugin/*.json` files will silently fall behind unless something keeps them in sync.
 
-**Current state:** the release workflow in this repo does NOT automatically update the marketplace repo. After a plot release, the marketplace entry is stale until manually updated.
+**Step 2 of the release flow above currently overstates what changesets does.** Before the next release, one of these needs to be in place:
 
-**What likely needs to happen on each release:**
-- Bump the version reference in `eins78/plot-marketplace` to match the new plot version.
-- Update any release link or changelog pointer in the marketplace entry.
-- Open a PR in `eins78/plot-marketplace` (or push directly if the repo allows it).
+1. **Wrap the version script** — `"version": "changeset version && node scripts/sync-plugin-versions.js"` where the script reads `package.json#.version` and writes it into both `.claude-plugin/*.json` files. Lowest friction; deterministic.
+2. **Postversion hook** — same effect, plumbed via lifecycle hook instead of script chaining.
+3. **Manual checklist** — release template item; lowest tooling, easy to forget, will eventually fail.
 
-**Questions the maintainer should decide:**
-1. Should this repo's release workflow open a PR in `eins78/plot-marketplace` automatically? (Requires a cross-repo token and a workflow addition here.)
-2. Or is a manual step acceptable — e.g., a checklist item in the GitHub release template?
-3. What fields in the marketplace entry actually need updating on each plot release?
-
-Until this is decided, the marketplace update is a **manual post-release step** that is easy to forget. Add a reminder to your release checklist.
+**This PR does not implement any of the three options** — the choice and implementation belong in a follow-up release-pipeline PR. Filing this section as the explicit handoff so it isn't lost.
