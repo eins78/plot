@@ -24,6 +24,8 @@ Plot works for any team composition, but is especially designed for **human deci
 
 Sprints (`/plot-sprint`) are orthogonal — they group plans by schedule, not by workflow phase.
 
+New to Plot? Read [Intro to Using Plot](skills/plot/intro-to-using-plot.md) for a walkthrough of the lifecycle.
+
 ## Skills
 
 | Skill | Description |
