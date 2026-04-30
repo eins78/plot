@@ -57,7 +57,3 @@ On push to `main`:
 | `pnpm test` | Verify all skills parse |
 | `pnpm run version` | Apply pending changesets locally (bump skill versions, run `changeset version`, sync plugin metadata) |
 | `pnpm run release` | Manual escape hatch: run `version`, commit, and tag locally (use only if Actions is broken) |
-
-## Marketplace coupling
-
-The downstream `eins78/plot-marketplace` repo references this repo. If its consumption pattern depends on tags or release artifacts, that integration may need its own update after a release lands here. The release pipeline in this repo does **not** touch `plot-marketplace`.
