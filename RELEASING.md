@@ -1,30 +1,59 @@
 # Releasing Plot
 
-Releases are driven by [changesets](https://github.com/changesets/changesets).
+Plot uses [Changesets](https://github.com/changesets/changesets) for versioning, with a per-skill version bumping layer on top. The pipeline runs in GitHub Actions on push to `main`.
 
-## Release flow
+## TL;DR — adding a changeset
 
-1. **Accumulate changesets** — contributors add `.changeset/*.md` files alongside PRs.
-2. **Version** — run `pnpm changeset version` to consume all pending changesets, bump `package.json` / `.claude-plugin/plugin.json` / `.claude-plugin/marketplace.json`, and update `CHANGELOG.md`.
-3. **Commit** the version bump (conventional message: `chore: version bump`).
-4. **Tag** — run `pnpm changeset tag` (creates a git tag matching `package.json` version).
-5. **Push** tag to origin — triggers the GitHub Actions release workflow (`.github/workflows/release.yml`), which publishes to npm and creates a GitHub release.
+```bash
+pnpm changeset
+# edit the created .changeset/<timestamp>.md
+```
 
-## Same-repo coupling: keeping `plugin.json` aligned with `package.json`
+Each PR that touches skills should include a changeset. The CI workflow warns if a PR has no changeset and errors if a `bumps:` block references a non-existent skill directory.
 
-Plot ships its plugin manifest at `.claude-plugin/plugin.json` and its marketplace registry entry at `.claude-plugin/marketplace.json` (registry name: `plot-marketplace`). **There is no separate `eins78/plot-marketplace` repository** — both files live in this repo, identical structural pattern to `eins78/agent-skills` (registry name: `eins78-marketplace`).
+## Changeset format
 
-**Marketplace version field removed.** Per the official Claude Code plugin docs, when both `plugin.json` and the marketplace entry carry a `version`, `plugin.json` wins and the marketplace value is informational/redundant. PR #13 dropped the `version` field from this repo's `.claude-plugin/marketplace.json` entirely — one drift surface eliminated.
+```markdown
+---
+"plot": minor
+---
 
-**Remaining gap.** Two files still carry a `version`:
+Brief description of the change
 
-- `package.json` — auto-bumped by `pnpm changeset version`.
-- `.claude-plugin/plugin.json` — **not** touched by changesets out of the box.
+<!--
+bumps:
+  skills:
+    plot-idea: patch
+    plot-approve: minor
+-->
+```
 
-`plugin.json` is what users see when listing/installing the plugin (it wins over the marketplace entry), so keeping it in sync with `package.json` is load-bearing. If `package.json` advances on a release and `plugin.json` doesn't, users see a stale version. Step 2 of the release flow above will silently leave `plugin.json` behind unless one of the following is in place:
+- The frontmatter block (`"plot": minor`) drives the **plugin-level** version bump (writes to `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`).
+- The HTML-comment `bumps:` block drives **per-skill** SKILL.md version bumps. Use the directory name under `skills/` (e.g. `plot-idea`, not `idea`).
+- If a change touches no skills, the `bumps:` block can be omitted entirely.
 
-1. **Wrap the version script** — `"version": "changeset version && node scripts/sync-plugin-version.js"` where the script reads `package.json#.version` and writes it into `.claude-plugin/plugin.json`.
-2. **Postversion hook** — same effect, plumbed via lifecycle hook.
-3. **Manual checklist item** — release template entry; lowest tooling, easiest to forget.
+Per `CLAUDE.md`: skill patch → plugin patch (at minimum), skill minor → plugin minor (at minimum), skill major → plugin major.
 
-**This PR does not implement any of the three** — the choice belongs in a separate release-pipeline PR. Filing this section as the explicit handoff so the gap isn't lost.
+## Pipeline
+
+```
+pnpm run version (run by changesets/action)
+  bump-skill-versions.sh → changeset version → sync-versions.sh
+  (read bumps: blocks)     (consume changesets)  (sync plugin.json + marketplace.json)
+```
+
+On push to `main`:
+
+1. **`release.yml`** runs `changesets/action`.
+2. If pending changesets exist, the action opens a `release: X.Y.Z` PR that contains the bumped versions and updated `CHANGELOG.md`.
+3. When that PR merges, the action's `publish` step runs `create-release.sh`, which tags the commit (`vX.Y.Z` plus `<skill>@<version>` for each skill) and creates a GitHub Release with the changelog.
+
+## Local commands
+
+| Command | Purpose |
+|---------|---------|
+| `pnpm changeset` | Create a new changeset file from the template |
+| `pnpm run validate` | Validate SKILL.md frontmatter (CI runs this on every PR) |
+| `pnpm test` | Verify all skills parse |
+| `pnpm run version` | Apply pending changesets locally (bump skill versions, run `changeset version`, sync plugin metadata) |
+| `pnpm run release` | Manual escape hatch: run `version`, commit, and tag locally (use only if Actions is broken) |
