@@ -1,3 +1,4 @@
+// @ts-nocheck — vendored bundle, not authored here
 // lit-html@3.2.1 — vendored from https://cdn.jsdelivr.net/npm/lit-html@3.2.1/+esm
 // To refresh: curl -L "https://cdn.jsdelivr.net/npm/lit-html@3.2.1/+esm" -o vendor/lit-html.js
 /**

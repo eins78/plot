@@ -202,6 +202,15 @@ async function main() {
 
   if (lastBoard) {
     populateSprintFilter(lastBoard.sprints, initialSprint);
+    // If the URL sprint slug is unknown, populateSprintFilter resets the
+    // dropdown to "" — reconcile URL and board to match.
+    const resolvedSprint = /** @type {HTMLSelectElement|null} */ (
+      document.getElementById('sprint-filter')
+    )?.value ?? '';
+    if (resolvedSprint !== initialSprint) {
+      setSprintInUrl(resolvedSprint);
+      renderBoard(lastBoard, resolvedSprint);
+    }
   }
 
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('sprint-filter'));
