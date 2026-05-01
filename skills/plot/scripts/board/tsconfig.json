@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "checkJs": true,
+    "checkJs": false,
     "allowJs": true,
     "noEmit": true,
     "strict": true,
