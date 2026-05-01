@@ -31,6 +31,7 @@ Scripts in `skills/plot/scripts/` that any model tier can use:
 | `plot-impl-status.sh` | Query all implementation PR states for a slug |
 | `plot-review-status.sh` | Check review freshness for sprint items |
 | `plot-update-board.sh` | Update GitHub Projects board status for a PR |
+| `board/server.mjs` | Local Kanban status board (run via `pnpm board`) |
 
 Design split (Manifesto Principle 3): **skills interpret and adapt; scripts collect and report.**
 
