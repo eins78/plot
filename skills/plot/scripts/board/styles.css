@@ -3,32 +3,57 @@
 /* ─── Semantic alias layer ──────────────────────────────────────────────────── */
 
 :root {
-  --surface-page:    var(--gray-0);
-  --surface-column:  var(--gray-1);
-  --surface-card:    var(--gray-0);
-  --surface-border:  var(--gray-3);
-  --text-strong:     var(--gray-12);
-  --text-muted:      var(--gray-7);
+  /* surfaces */
+  --surface-page:      var(--gray-0);
+  --surface-column:    var(--gray-1);
+  --surface-card:      var(--gray-0);
+  --surface-border:    var(--gray-3);
+  --text-strong:       var(--gray-12);
+  --text-muted:        var(--gray-7);
+  --text-on-accent:    var(--gray-0);
 
-  --phase-draft:     var(--gray-6);
-  --phase-approved:  var(--green-6);
-  --phase-delivered: var(--violet-6);
-  --phase-released:  var(--orange-7);
+  /* phase tints (left rule on cards + top rule on column headers) */
+  --phase-draft:       var(--gray-6);
+  --phase-approved:    var(--green-6);
+  --phase-delivered:   var(--violet-6);
+  --phase-released:    var(--orange-7);
 
-  --type-feature:    var(--blue-6);
-  --type-bug:        var(--red-6);
-  --type-docs:       var(--gray-7);
-  --type-infra:      var(--violet-7);
+  /* type badge backgrounds */
+  --type-feature:      var(--blue-6);
+  --type-bug:          var(--red-6);
+  --type-docs:         var(--gray-7);
+  --type-infra:        var(--violet-7);
 
-  --font-body:       var(--font-sans);
-  --font-mono:       var(--font-mono);
+  /* interaction */
+  --focus-ring:        var(--phase-approved);
 
-  --pad-card:        var(--size-3);
-  --gap-cards:       var(--size-3);
-  --gap-columns:     var(--size-4);
+  /* typography */
+  --font-body:         var(--font-sans);
+  --font-mono:         var(--font-mono);
+  --text-xs:           var(--font-size-0);
+  --text-sm:           var(--font-size-1);
+  --text-lg:           var(--font-size-3);
+  --weight-medium:     var(--font-weight-6);
+  --weight-bold:       var(--font-weight-7);
+  --leading-tight:     var(--font-lineheight-1);
+  --leading-snug:      var(--font-lineheight-2);
+  --leading-base:      var(--font-lineheight-3);
+  --tracking-tight:    var(--font-letterspacing-0);
 
-  --text-on-accent:  var(--gray-0);
-  --focus-ring:      var(--phase-approved);
+  /* radii */
+  --radius-card:       var(--radius-2);
+  --radius-pill:       var(--radius-round);
+
+  /* spacing — each name reflects semantic role, not raw scale step */
+  --space-xs:          var(--size-1);   /* badge row gap */
+  --space-sm:          var(--size-2);   /* intra-element gaps and small padding */
+  --pad-card:          var(--size-3);   /* card internal padding */
+  --gap-cards:         var(--size-3);   /* gap between cards in a column */
+  --pad-header:        var(--size-3);   /* header block padding */
+  --pad-board:         var(--size-4);   /* board wrapper padding */
+  --gap-columns:       var(--size-4);   /* gap between columns */
+  --col-min-width:     var(--size-13);  /* minimum column width */
+  --count-min-width:   var(--size-4);   /* count badge min-width */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +64,7 @@
     --surface-border:  var(--gray-9);
     --text-strong:     var(--gray-1);
     --text-muted:      var(--gray-5);
+    /* phase + type tints stay the same — OP mid-range hues read well in both modes */
   }
 }
 
@@ -61,8 +87,8 @@ body {
   background: var(--surface-page);
   color: var(--text-strong);
   font-family: var(--font-body);
-  font-size: var(--font-size-1);
-  line-height: var(--font-lineheight-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -74,17 +100,17 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--size-3) var(--size-4);
+  padding: var(--pad-header) var(--pad-board);
   border-bottom: 1px solid var(--surface-border);
   background: var(--surface-column);
-  gap: var(--size-3);
+  gap: var(--pad-header);
 }
 
 header h1 {
-  font-size: var(--font-size-3);
-  font-weight: var(--font-weight-7);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
   color: var(--text-strong);
-  letter-spacing: var(--font-letterspacing-0);
+  letter-spacing: var(--tracking-tight);
 }
 
 /* ─── Sprint filter ─────────────────────────────────────────────────────────── */
@@ -93,10 +119,10 @@ header h1 {
   background: var(--surface-card);
   color: var(--text-strong);
   border: 1px solid var(--surface-border);
-  border-radius: var(--radius-2);
-  padding: var(--size-1) var(--size-2);
+  border-radius: var(--radius-card);
+  padding: var(--space-xs) var(--space-sm);
   font-family: var(--font-body);
-  font-size: var(--font-size-1);
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 
@@ -111,7 +137,7 @@ header h1 {
   display: flex;
   flex-direction: row;
   gap: var(--gap-columns);
-  padding: var(--size-4);
+  padding: var(--pad-board);
   flex: 1;
   align-items: stretch;
   overflow-x: auto;
@@ -125,38 +151,38 @@ header h1 {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
-  min-width: var(--size-13);
+  min-width: var(--col-min-width);
   min-height: 0;
   background: var(--surface-column);
   border: 1px solid var(--surface-border);
-  border-radius: var(--radius-2);
+  border-radius: var(--radius-card);
   overflow: hidden;
 }
 
 .column-header {
   display: flex;
   align-items: center;
-  gap: var(--size-2);
-  padding: var(--size-2) var(--pad-card);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--pad-card);
   border-bottom: 1px solid var(--surface-border);
 }
 
 .column-header h2 {
-  font-size: var(--font-size-1);
-  font-weight: var(--font-weight-6);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   color: var(--text-strong);
   flex: 1;
 }
 
 .column-count {
-  font-size: var(--font-size-0);
-  font-weight: var(--font-weight-6);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
   background: var(--surface-border);
-  padding: 2px var(--size-2);
-  border-radius: var(--radius-round);
-  min-width: var(--size-4);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
+  min-width: var(--count-min-width);
   text-align: center;
 }
 
@@ -182,10 +208,10 @@ header h1 {
   background: var(--surface-card);
   padding: var(--pad-card);
   border: 1px solid var(--surface-border);
-  border-radius: var(--radius-2);
+  border-radius: var(--radius-card);
   display: flex;
   flex-direction: column;
-  gap: var(--size-2);
+  gap: var(--space-sm);
 }
 
 /* Phase-tinted left rule — NOT full-card background tint */
@@ -197,10 +223,10 @@ header h1 {
 /* ─── Card title ────────────────────────────────────────────────────────────── */
 
 .card-title {
-  font-size: var(--font-size-1);
-  font-weight: var(--font-weight-6);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   color: var(--text-strong);
-  line-height: var(--font-lineheight-2);
+  line-height: var(--leading-snug);
 }
 
 /* ─── Card badges ───────────────────────────────────────────────────────────── */
@@ -209,43 +235,28 @@ header h1 {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: var(--size-1);
+  gap: var(--space-xs);
 }
 
 .badge {
-  font-size: var(--font-size-0);
-  padding: 2px var(--size-2);
-  border-radius: var(--radius-round);
+  font-size: var(--text-xs);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
   background: var(--surface-border);
   color: var(--text-strong);
   white-space: nowrap;
-  line-height: var(--font-lineheight-1);
+  line-height: var(--leading-tight);
 }
 
-.badge[data-type="feature"] {
-  background: var(--type-feature);
-  color: var(--text-on-accent);
-}
-
-.badge[data-type="bug"] {
-  background: var(--type-bug);
-  color: var(--text-on-accent);
-}
-
-.badge[data-type="docs"] {
-  background: var(--type-docs);
-  color: var(--text-on-accent);
-}
-
-.badge[data-type="infra"] {
-  background: var(--type-infra);
-  color: var(--text-on-accent);
-}
+.badge[data-type="feature"] { background: var(--type-feature); color: var(--text-on-accent); }
+.badge[data-type="bug"]     { background: var(--type-bug);     color: var(--text-on-accent); }
+.badge[data-type="docs"]    { background: var(--type-docs);    color: var(--text-on-accent); }
+.badge[data-type="infra"]   { background: var(--type-infra);   color: var(--text-on-accent); }
 
 /* ─── Card path ─────────────────────────────────────────────────────────────── */
 
 .card-path {
-  font-size: var(--font-size-0);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   font-family: var(--font-mono);
   overflow: hidden;
@@ -256,7 +267,7 @@ header h1 {
 /* ─── Card assignee ─────────────────────────────────────────────────────────── */
 
 .card-assignee {
-  font-size: var(--font-size-0);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
@@ -266,8 +277,8 @@ header h1 {
 .empty-state {
   text-align: center;
   color: var(--text-muted);
-  font-size: var(--font-size-0);
-  padding: var(--size-4) var(--pad-card);
+  font-size: var(--text-xs);
+  padding: var(--pad-board) var(--pad-card);
 }
 
 /* ─── Narrow viewport: stack columns vertically ─────────────────────────────── */
