@@ -26,6 +26,8 @@
   --pad-card:        var(--size-3);
   --gap-cards:       var(--size-3);
   --gap-columns:     var(--size-4);
+
+  --text-on-accent:  var(--gray-0);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -217,22 +219,22 @@ header h1 {
 
 .badge[data-type="feature"] {
   background: var(--type-feature);
-  color: var(--gray-0);
+  color: var(--text-on-accent);
 }
 
 .badge[data-type="bug"] {
   background: var(--type-bug);
-  color: var(--gray-0);
+  color: var(--text-on-accent);
 }
 
 .badge[data-type="docs"] {
   background: var(--type-docs);
-  color: var(--gray-0);
+  color: var(--text-on-accent);
 }
 
 .badge[data-type="infra"] {
   background: var(--type-infra);
-  color: var(--gray-0);
+  color: var(--text-on-accent);
 }
 
 /* ─── Card path ─────────────────────────────────────────────────────────────── */
