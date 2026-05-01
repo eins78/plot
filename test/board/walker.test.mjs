@@ -206,8 +206,8 @@ describe('walker: missing optional dirs', () => {
   });
 
   after(() => {
-    server.kill();
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    if (server) server.kill();
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it('returns valid Board JSON with 4 columns when optional dirs are absent', async () => {
@@ -252,8 +252,8 @@ describe('walker: symlink deduplication', () => {
   });
 
   after(() => {
-    server.kill();
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    if (server) server.kill();
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it('plan symlinked from active/ appears exactly once in board JSON', async () => {
@@ -297,8 +297,8 @@ describe('walker: broken symlink tolerance', () => {
   });
 
   after(() => {
-    server.kill();
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    if (server) server.kill();
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it('server ignores broken symlinks and returns valid Board JSON', async () => {
@@ -336,8 +336,8 @@ describe('walker: sprint discovery', () => {
   });
 
   after(() => {
-    server.kill();
-    fs.rmSync(tmpDir, { recursive: true, force: true });
+    if (server) server.kill();
+    if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it('active sprint appears in board.sprints', async () => {

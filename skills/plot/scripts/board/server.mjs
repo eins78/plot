@@ -4,29 +4,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { parsePlan, parseSprint } from './parser.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** @typedef {'Draft'|'Approved'|'Delivered'|'Released'} Phase */
-/** @typedef {'Planning'|'Committed'|'Active'|'Closed'} SprintPhase */
-
-/**
- * @typedef {Object} Card
- * @property {string} slug
- * @property {string} title
- * @property {string} type - 'feature'|'bug'|'docs'|'infra' or unknown string
- * @property {Phase} phase
- * @property {string} [sprint] - sprint slug if the plan is part of a sprint
- * @property {string} [assignee] - github handle from ## Approval section
- * @property {string} path - relative path under repo root (e.g. docs/plans/2026-03-15-board-sync.md)
- */
-
-/**
- * @typedef {Object} SprintCard
- * @property {string} slug
- * @property {string} title
- * @property {SprintPhase} phase
- */
+/** @typedef {import('./parser.mjs').Phase} Phase */
+/** @typedef {import('./parser.mjs').SprintPhase} SprintPhase */
+/** @typedef {import('./parser.mjs').Card} Card */
+/** @typedef {import('./parser.mjs').SprintCard} SprintCard */
 
 /**
  * @typedef {Object} Column
@@ -52,127 +37,6 @@ const MIME = {
   '.mjs': 'text/javascript; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
 };
-
-/**
- * Parse a plan markdown file.
- * @param {string} absPath - absolute path to the plan .md file
- * @returns {Card|null} - null if Phase is unknown or file is unreadable
- */
-function parsePlan(absPath) {
-  let content;
-  try {
-    content = fs.readFileSync(absPath, 'utf8');
-  } catch {
-    return null;
-  }
-
-  // Extract title from first # heading
-  const titleMatch = content.match(/^# (.+)$/m);
-  const title = titleMatch ? titleMatch[1].trim() : path.basename(absPath, '.md');
-
-  // Extract slug from filename: strip YYYY-MM-DD- prefix and .md extension
-  const filename = path.basename(absPath);
-  const slugMatch = filename.match(/^\d{4}-\d{2}-\d{2}-(.+)\.md$/);
-  const slug = slugMatch ? slugMatch[1] : path.basename(absPath, '.md');
-
-  // Extract path relative to REPO_ROOT
-  const relPath = path.relative(REPO_ROOT, absPath);
-
-  // Find the ## Status section (slice from ## Status to next ##)
-  // No 'm' flag: without multiline mode, '$' only matches at string end,
-  // so the non-greedy [\s\S]*? correctly spans all lines to the next ## heading.
-  const statusSectionMatch = content.match(/## Status\s*\n([\s\S]*?)(?=\n## |$)/);
-  const statusSection = statusSectionMatch ? statusSectionMatch[1] : '';
-
-  // Extract Phase
-  const phaseMatch = statusSection.match(/^- \*\*Phase:\*\* (.+)$/m);
-  const phase = phaseMatch ? phaseMatch[1].trim() : '';
-
-  // Extract Type
-  const typeMatch = statusSection.match(/^- \*\*Type:\*\* (.+)$/m);
-  const type = typeMatch ? typeMatch[1].trim() : 'unknown';
-
-  // Extract Sprint (treat HTML comment placeholders as absent)
-  const sprintMatch = statusSection.match(/^- \*\*Sprint:\*\* (.+)$/m);
-  let sprint;
-  if (sprintMatch) {
-    const sprintVal = sprintMatch[1].trim();
-    if (!sprintVal.startsWith('<!--')) {
-      sprint = sprintVal;
-    }
-  }
-
-  // Find the ## Approval section (may not exist)
-  const approvalSectionMatch = content.match(/## Approval\s*\n([\s\S]*?)(?=\n## |$)/);
-  let assignee;
-  if (approvalSectionMatch) {
-    const approvalSection = approvalSectionMatch[1];
-    const assigneeMatch = approvalSection.match(/^- \*\*Assignee:\*\* (.+)$/m);
-    if (assigneeMatch) {
-      assignee = assigneeMatch[1].trim();
-    }
-  }
-
-  // Validate Phase
-  if (!PHASES.includes(/** @type {Phase} */ (phase))) {
-    console.warn(`[parsePlan] Unknown phase "${phase}" in ${absPath} — skipping`);
-    return null;
-  }
-
-  /** @type {Card} */
-  const card = {
-    slug,
-    title,
-    type,
-    phase: /** @type {Phase} */ (phase),
-    path: relPath,
-  };
-
-  if (sprint !== undefined) card.sprint = sprint;
-  if (assignee !== undefined) card.assignee = assignee;
-
-  return card;
-}
-
-/**
- * Parse a sprint markdown file.
- * @param {string} absPath
- * @returns {SprintCard|null}
- */
-function parseSprint(absPath) {
-  let content;
-  try {
-    content = fs.readFileSync(absPath, 'utf8');
-  } catch {
-    return null;
-  }
-
-  // Extract title from "# Sprint: <title>" pattern
-  const titleMatch = content.match(/^# Sprint: (.+)$/m);
-  const title = titleMatch ? titleMatch[1].trim() : path.basename(absPath, '.md');
-
-  // Extract slug from filename: strip YYYY-Www- prefix
-  const filename = path.basename(absPath);
-  const slugMatch = filename.match(/^\d{4}-W\d{2}-(.+)\.md$/);
-  const slug = slugMatch ? slugMatch[1] : path.basename(absPath, '.md');
-
-  // Find ## Status section, extract Phase
-  const statusSectionMatch = content.match(/## Status\s*\n([\s\S]*?)(?=\n## |$)/);
-  const statusSection = statusSectionMatch ? statusSectionMatch[1] : '';
-  const phaseMatch = statusSection.match(/^- \*\*Phase:\*\* (.+)$/m);
-  const phase = phaseMatch ? phaseMatch[1].trim() : '';
-
-  if (!phase) {
-    console.warn(`[parseSprint] No phase found in ${absPath} — skipping`);
-    return null;
-  }
-
-  return {
-    slug,
-    title,
-    phase: /** @type {SprintPhase} */ (phase),
-  };
-}
 
 /**
  * Walk plan/sprint directories and build the board JSON.
@@ -203,7 +67,7 @@ function buildBoard() {
       }
       if (seen.has(resolved)) continue;
       seen.add(resolved);
-      const card = parsePlan(resolved);
+      const card = parsePlan(resolved, REPO_ROOT);
       if (card) cards.push(card);
     }
   }
