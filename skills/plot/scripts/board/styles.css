@@ -1,0 +1,278 @@
+@import url('./vendor/open-props.min.css');
+
+/* ─── Semantic alias layer ──────────────────────────────────────────────────── */
+
+:root {
+  --surface-page:    var(--gray-0);
+  --surface-column:  var(--gray-1);
+  --surface-card:    var(--gray-0);
+  --surface-border:  var(--gray-3);
+  --text-strong:     var(--gray-12);
+  --text-muted:      var(--gray-7);
+
+  --phase-draft:     var(--gray-6);
+  --phase-approved:  var(--green-6);
+  --phase-delivered: var(--violet-6);
+  --phase-released:  var(--orange-7);
+
+  --type-feature:    var(--blue-6);
+  --type-bug:        var(--red-6);
+  --type-docs:       var(--gray-7);
+  --type-infra:      var(--violet-7);
+
+  --font-body:       var(--font-sans);
+  --font-mono:       var(--font-mono);
+
+  --pad-card:        var(--size-3);
+  --gap-cards:       var(--size-3);
+  --gap-columns:     var(--size-4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-page:    var(--gray-12);
+    --surface-column:  var(--gray-11);
+    --surface-card:    var(--gray-12);
+    --surface-border:  var(--gray-9);
+    --text-strong:     var(--gray-1);
+    --text-muted:      var(--gray-5);
+  }
+}
+
+/* ─── Reset / base ──────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background: var(--surface-page);
+  color: var(--text-strong);
+  font-family: var(--font-body);
+  font-size: var(--font-size-1);
+  line-height: var(--font-lineheight-3);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────────── */
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--size-3) var(--size-4);
+  border-bottom: 1px solid var(--surface-border);
+  background: var(--surface-column);
+  gap: var(--size-3);
+}
+
+header h1 {
+  font-size: var(--font-size-3);
+  font-weight: var(--font-weight-7);
+  color: var(--text-strong);
+  letter-spacing: var(--font-letterspacing-0);
+}
+
+/* ─── Sprint filter ─────────────────────────────────────────────────────────── */
+
+#sprint-filter {
+  background: var(--surface-card);
+  color: var(--text-strong);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-2);
+  padding: var(--size-1) var(--size-2);
+  font-family: var(--font-body);
+  font-size: var(--font-size-1);
+  cursor: pointer;
+}
+
+#sprint-filter:focus {
+  outline: 2px solid var(--phase-approved);
+  outline-offset: 1px;
+}
+
+/* ─── Board layout ──────────────────────────────────────────────────────────── */
+
+#board {
+  display: flex;
+  flex-direction: row;
+  gap: var(--gap-columns);
+  padding: var(--size-4);
+  flex: 1;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+/* ─── Column ────────────────────────────────────────────────────────────────── */
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: var(--size-13);
+  background: var(--surface-column);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-2);
+  overflow: hidden;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2);
+  padding: var(--size-2) var(--pad-card);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.column-header h2 {
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-6);
+  color: var(--text-strong);
+  flex: 1;
+}
+
+.column-count {
+  font-size: var(--font-size-0);
+  font-weight: var(--font-weight-6);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  background: var(--surface-border);
+  padding: 2px var(--size-2);
+  border-radius: var(--radius-round);
+  min-width: var(--size-4);
+  text-align: center;
+}
+
+.column-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-cards);
+  padding: var(--pad-card);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ─── Phase accent on column header ────────────────────────────────────────── */
+
+.column[data-phase="Draft"]     .column-header { border-top: 3px solid var(--phase-draft); }
+.column[data-phase="Approved"]  .column-header { border-top: 3px solid var(--phase-approved); }
+.column[data-phase="Delivered"] .column-header { border-top: 3px solid var(--phase-delivered); }
+.column[data-phase="Released"]  .column-header { border-top: 3px solid var(--phase-released); }
+
+/* ─── Card ──────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface-card);
+  padding: var(--pad-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+}
+
+/* Phase-tinted left rule — NOT full-card background tint */
+.card[data-phase="Draft"]     { border-left: 3px solid var(--phase-draft); }
+.card[data-phase="Approved"]  { border-left: 3px solid var(--phase-approved); }
+.card[data-phase="Delivered"] { border-left: 3px solid var(--phase-delivered); }
+.card[data-phase="Released"]  { border-left: 3px solid var(--phase-released); }
+
+/* ─── Card title ────────────────────────────────────────────────────────────── */
+
+.card-title {
+  font-size: var(--font-size-1);
+  font-weight: var(--font-weight-6);
+  color: var(--text-strong);
+  line-height: var(--font-lineheight-2);
+}
+
+/* ─── Card badges ───────────────────────────────────────────────────────────── */
+
+.card-badges {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--size-1);
+}
+
+.badge {
+  font-size: var(--font-size-0);
+  padding: 2px var(--size-2);
+  border-radius: var(--radius-round);
+  background: var(--surface-border);
+  color: var(--text-strong);
+  white-space: nowrap;
+  line-height: var(--font-lineheight-1);
+}
+
+.badge[data-type="feature"] {
+  background: var(--type-feature);
+  color: var(--gray-0);
+}
+
+.badge[data-type="bug"] {
+  background: var(--type-bug);
+  color: var(--gray-0);
+}
+
+.badge[data-type="docs"] {
+  background: var(--type-docs);
+  color: var(--gray-0);
+}
+
+.badge[data-type="infra"] {
+  background: var(--type-infra);
+  color: var(--gray-0);
+}
+
+/* ─── Card path ─────────────────────────────────────────────────────────────── */
+
+.card-path {
+  font-size: var(--font-size-0);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Card assignee ─────────────────────────────────────────────────────────── */
+
+.card-assignee {
+  font-size: var(--font-size-0);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ─── Empty state ───────────────────────────────────────────────────────────── */
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-0);
+  padding: var(--size-4) var(--pad-card);
+}
+
+/* ─── Narrow viewport: stack columns vertically ─────────────────────────────── */
+
+@media (max-width: 768px) {
+  #board {
+    flex-direction: column;
+    overflow-x: unset;
+  }
+
+  .column {
+    min-width: unset;
+    width: 100%;
+  }
+}
