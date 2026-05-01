@@ -17,6 +17,8 @@ compatibility: Designed for Claude Code and Cursor. Requires git. Currently uses
 
 Lean, git-native planning system. Plans are markdown files on branches, PRs are workflow metadata, git is the source of truth. Plans merge to main before implementation begins; one plan can spawn multiple parallel implementation branches. Works with any team composition — human, AI-assisted, or fully agentic.
 
+> **Human-facing tutorial:** [intro-to-using-plot.md](intro-to-using-plot.md). The instructions below are the dispatcher's reference manual.
+
 ## Setup
 
 Add a `## Plot Config` section to the adopting project's `CLAUDE.md`:

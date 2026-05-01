@@ -97,7 +97,7 @@ Plot is deliberately small and opinionated. These boundaries are intentional, no
 
 - **Not a monorepo tool.** Plot works with a single repository. Coordinating releases across multiple packages or repos is out of scope.
 - **Not a package publisher.** Plot handles versioning and changelogs, not npm publish or artifact distribution.
-- **Not an issue tracker.** It doesn't supplement issue trackers — it replaces them. Teams that use GitHub Issues alongside Plot will find the two systems overlap and conflict.
+- **Not an issue tracker.** Plot replaces issue trackers for *planned implementation work* — the things the team has committed to build. GitHub Issues (or any equivalent) remain useful as the *inbox* that feeds Plot: external bug reports, user-submitted feature requests, and high-level user stories or business goals that haven't been refined into plans yet. The boundary: issues are signals, plans are commitments. An issue may eventually become a plan, but work is executed and scheduled in plans, not in the issue tracker.
 - **Not a CI/CD system.** Plot creates tags and changelogs. What happens after that (deployment, notifications, artifact builds) is the project's CI/CD pipeline's job.
 - **Not an effort tracker.** No story points, no burndown charts, no estimates. Sprints use deadlines as constraints, not time as a metric — Plot tracks *what* is planned and *whether* it shipped, not *how long* it took.
 - **Not a release note generator.** Plot discovers and uses whatever release note tooling the project already has (changesets, custom scripts, etc.). When no tooling exists, it constructs notes from plan changelog sections and commit messages. It doesn't auto-generate notes from commit history alone.
