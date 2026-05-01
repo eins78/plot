@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { parsePlan, parseSprint } from './parser.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +29,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const REPO_ROOT = process.cwd(); // pnpm board runs from repo root
 const PORT = Number(process.env.PORT ?? 7777);
+const HOST = process.env.HOST ?? 'localhost';
 const PHASES = /** @type {Phase[]} */ (['Draft', 'Approved', 'Delivered', 'Released']);
 
 /** @type {Record<string, string>} */
@@ -154,6 +156,12 @@ if (!fs.existsSync(plansDir)) {
 }
 
 const server = http.createServer(handleRequest);
-server.listen(PORT, 'localhost', () => {
+server.listen(PORT, HOST, () => {
   console.log(`Plot board: http://localhost:${PORT}`);
+  if (HOST === '0.0.0.0') {
+    try {
+      const tsIp = execFileSync('tailscale', ['ip', '-4'], { encoding: 'utf8' }).trim();
+      if (tsIp) console.log(`  tailscale:  http://${tsIp}:${PORT}`);
+    } catch { /* tailscale not running or not installed */ }
+  }
 });
