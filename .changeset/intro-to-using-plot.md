@@ -1,5 +1,5 @@
 ---
-"plot": minor
+"plot": patch
 ---
 
 Add a narrative tutorial for new users, and clarify how Plot relates to GitHub Issues.
