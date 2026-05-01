@@ -45,6 +45,7 @@ const REPO_ROOT = process.cwd(); // pnpm board runs from repo root
 const PORT = Number(process.env.PORT ?? 7777);
 const PHASES = /** @type {Phase[]} */ (['Draft', 'Approved', 'Delivered', 'Released']);
 
+/** @type {Record<string, string>} */
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -78,7 +79,9 @@ function parsePlan(absPath) {
   const relPath = path.relative(REPO_ROOT, absPath);
 
   // Find the ## Status section (slice from ## Status to next ##)
-  const statusSectionMatch = content.match(/^## Status\s*\n([\s\S]*?)(?=\n## |\n*$)/m);
+  // No 'm' flag: without multiline mode, '$' only matches at string end,
+  // so the non-greedy [\s\S]*? correctly spans all lines to the next ## heading.
+  const statusSectionMatch = content.match(/## Status\s*\n([\s\S]*?)(?=\n## |$)/);
   const statusSection = statusSectionMatch ? statusSectionMatch[1] : '';
 
   // Extract Phase
@@ -100,7 +103,7 @@ function parsePlan(absPath) {
   }
 
   // Find the ## Approval section (may not exist)
-  const approvalSectionMatch = content.match(/^## Approval\s*\n([\s\S]*?)(?=\n## |\n*$)/m);
+  const approvalSectionMatch = content.match(/## Approval\s*\n([\s\S]*?)(?=\n## |$)/);
   let assignee;
   if (approvalSectionMatch) {
     const approvalSection = approvalSectionMatch[1];
@@ -154,7 +157,7 @@ function parseSprint(absPath) {
   const slug = slugMatch ? slugMatch[1] : path.basename(absPath, '.md');
 
   // Find ## Status section, extract Phase
-  const statusSectionMatch = content.match(/^## Status\s*\n([\s\S]*?)(?=\n## |\n*$)/m);
+  const statusSectionMatch = content.match(/## Status\s*\n([\s\S]*?)(?=\n## |$)/);
   const statusSection = statusSectionMatch ? statusSectionMatch[1] : '';
   const phaseMatch = statusSection.match(/^- \*\*Phase:\*\* (.+)$/m);
   const phase = phaseMatch ? phaseMatch[1].trim() : '';
