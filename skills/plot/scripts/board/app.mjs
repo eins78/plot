@@ -109,27 +109,25 @@ function renderBoard(board, selectedSprint) {
 // ─── Data loading ─────────────────────────────────────────────────────────────
 
 /**
- * Fetch the board from the API and render it.
- * @param {string} selectedSprint - empty string means "all sprints"
- * @returns {Promise<void>}
+ * Fetch the board JSON from the API.
+ * @returns {Promise<Board|null>} null on error (error message rendered into #board)
  */
-async function loadBoard(selectedSprint) {
+async function fetchBoard() {
   const boardEl = document.getElementById('board');
-  if (!boardEl) return;
-
   try {
     const response = await fetch('/api/board');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const board = /** @type {Board} */ (await response.json());
-    lastBoard = board;
-    renderBoard(board, selectedSprint);
+    return /** @type {Board} */ (await response.json());
   } catch (err) {
-    render(
-      html`<p style="text-align:center;padding:2rem;color:var(--text-muted)">
-        Failed to load board: ${err instanceof Error ? err.message : String(err)}
-      </p>`,
-      boardEl,
-    );
+    if (boardEl) {
+      render(
+        html`<p class="empty-state">
+          Failed to load board: ${err instanceof Error ? err.message : String(err)}
+        </p>`,
+        boardEl,
+      );
+    }
+    return null;
   }
 }
 
@@ -193,34 +191,30 @@ function populateSprintFilter(sprints, selectedSprint) {
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
 /**
- * Wire up the app: load board, populate filter, attach change handler.
+ * Wire up the app: load board, validate sprint, render once, attach handler.
  * @returns {Promise<void>}
  */
 async function main() {
-  const initialSprint = getSprintFromUrl();
-  await loadBoard(initialSprint);
+  const board = await fetchBoard();
+  if (!board) return;
+  lastBoard = board;
 
-  if (lastBoard) {
-    populateSprintFilter(lastBoard.sprints, initialSprint);
-    // If the URL sprint slug is unknown, populateSprintFilter resets the
-    // dropdown to "" — reconcile URL and board to match.
-    const resolvedSprint = /** @type {HTMLSelectElement|null} */ (
-      document.getElementById('sprint-filter')
-    )?.value ?? '';
-    if (resolvedSprint !== initialSprint) {
-      setSprintInUrl(resolvedSprint);
-      renderBoard(lastBoard, resolvedSprint);
-    }
-  }
+  // Validate the URL sprint slug against known sprints; clear if unknown.
+  const rawSprint = getSprintFromUrl();
+  const knownSlugs = board.sprints.map(s => s.slug);
+  const selectedSprint = (rawSprint && knownSlugs.includes(rawSprint)) ? rawSprint : '';
+  if (selectedSprint !== rawSprint) setSprintInUrl(selectedSprint);
+
+  // Single render with the validated sprint — no double-render on bad slug.
+  renderBoard(board, selectedSprint);
+  populateSprintFilter(board.sprints, selectedSprint);
 
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('sprint-filter'));
   if (select) {
     select.addEventListener('change', () => {
       const sprint = select.value;
       setSprintInUrl(sprint);
-      if (lastBoard) {
-        renderBoard(lastBoard, sprint);
-      }
+      if (lastBoard) renderBoard(lastBoard, sprint);
     });
   }
 }
