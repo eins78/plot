@@ -1,5 +1,17 @@
 # plot
 
+## 1.2.0
+
+### Minor Changes
+
+- [#18](https://github.com/eins78/plot/pull/18) [`adc77c7`](https://github.com/eins78/plot/commit/adc77c782ab238822513bb5def9c3d3c0cb48c59) - Add local Kanban status board (`pnpm board`) to the plot skill
+
+  <!--
+  bumps:
+    skills:
+      plot: minor
+  -->
+
 ## 1.0.1
 
 ### Patch Changes
