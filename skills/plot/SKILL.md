@@ -200,6 +200,8 @@ See `skills/plot/templates/claude-md-snippet.md` for a ready-to-paste template.
 
 ## Local Status Board
 
+> **🧪 Beta** — functional but rough edges remain (look-and-feel, live reload, click targets). Feedback welcome.
+
 Plot ships a local Kanban board for maintainers who want a glanceable view of plan phases without GitHub auth or latency. Start it with:
 
 ```bash
