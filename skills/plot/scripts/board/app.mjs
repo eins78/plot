@@ -42,6 +42,11 @@ import { html, render } from './vendor/lit-html.js';
  * @property {SprintCard[]} sprints
  */
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+/** Sentinel sprint value meaning "plans with no sprint assigned". */
+const NO_SPRINT = '__no_sprint__';
+
 // ─── Module state ────────────────────────────────────────────────────────────
 
 /** @type {Board|null} */
@@ -82,9 +87,10 @@ function renderBoard(board, selectedSprint) {
 
   const columnsTemplate = html`
     ${board.columns.map(column => {
-      const filteredCards = selectedSprint
-        ? column.cards.filter(c => c.sprint === selectedSprint)
-        : column.cards;
+      const filteredCards =
+        selectedSprint === NO_SPRINT ? column.cards.filter(c => !c.sprint)
+        : selectedSprint             ? column.cards.filter(c => c.sprint === selectedSprint)
+        :                              column.cards;
 
       return html`
         <div class="column" data-phase=${column.phase}>
@@ -167,9 +173,9 @@ function populateSprintFilter(sprints, selectedSprint) {
   const select = /** @type {HTMLSelectElement|null} */ (document.getElementById('sprint-filter'));
   if (!select) return;
 
-  // Remove any previously-added options (keep the "All sprints" option at index 0)
-  while (select.options.length > 1) {
-    select.remove(1);
+  // Remove any previously-added sprint options (keep "All sprints" at 0 and "Not in sprint" at 1)
+  while (select.options.length > 2) {
+    select.remove(2);
   }
 
   for (const sprint of sprints) {
@@ -179,9 +185,9 @@ function populateSprintFilter(sprints, selectedSprint) {
     select.appendChild(option);
   }
 
-  // Set the selected value — only if it matches a known sprint
+  // Set the selected value — accept known sprint slugs and the NO_SPRINT sentinel
   const knownSlugs = sprints.map(s => s.slug);
-  if (selectedSprint && knownSlugs.includes(selectedSprint)) {
+  if (selectedSprint === NO_SPRINT || (selectedSprint && knownSlugs.includes(selectedSprint))) {
     select.value = selectedSprint;
   } else {
     select.value = '';
@@ -199,10 +205,11 @@ async function main() {
   if (!board) return;
   lastBoard = board;
 
-  // Validate the URL sprint slug against known sprints; clear if unknown.
+  // Validate the URL sprint slug; accept known slugs and the NO_SPRINT sentinel.
   const rawSprint = getSprintFromUrl();
   const knownSlugs = board.sprints.map(s => s.slug);
-  const selectedSprint = (rawSprint && knownSlugs.includes(rawSprint)) ? rawSprint : '';
+  const isValidSprint = rawSprint === NO_SPRINT || knownSlugs.includes(rawSprint);
+  const selectedSprint = isValidSprint ? rawSprint : '';
   if (selectedSprint !== rawSprint) setSprintInUrl(selectedSprint);
 
   // Single render with the validated sprint — no double-render on bad slug.
